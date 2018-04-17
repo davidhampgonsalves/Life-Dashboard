@@ -1,0 +1,15 @@
+[package]
+name = "life-dashboard"
+version = "0.1.0"
+authors = ["David Hamp-Gonsalves <davidhampgonsalves@gmail.com>"]
+
+[dependencies]
+openssl-probe = "0.1.2"
+reqwest = "0.8.2"
+chrono = { version = "0.4", features = ["serde"] }
+image = ""
+imageproc = ""
+serde = ""
+serde_derive = ""
+serde_json = "1.0"
+rusttype = ""
