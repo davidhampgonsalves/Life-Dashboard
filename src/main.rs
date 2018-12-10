@@ -10,9 +10,9 @@ extern crate rusttype;
 #[macro_use]
 extern crate serde_derive;
 
+use std::panic;
 use chrono::prelude::*;
 use serde_json::Error;
-use std::panic;
 use std::sync::mpsc;
 use std::fs::File;
 use std::path::Path;
@@ -30,22 +30,22 @@ use imageproc::drawing::{
     draw_text_mut,
 };
 use rusttype::{Font, FontCollection, Scale, point};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, FixedOffset};
 
 #[derive(Debug, Deserialize)]
 struct Event {
     faIcon: String,
     title: String,
     description: Option<String>,
-    start: Option<DateTime::<Utc>>,
-    end: Option<DateTime::<Utc>>,
+    start: Option<DateTime::<FixedOffset>>,
+    end: Option<DateTime::<FixedOffset>>,
 }
 
 #[derive(Debug, Deserialize)]
 struct Weather {
     faIcon: String,
-    temperatureHigh: u32,
-    temperatureLow: u32,
+    temperatureHigh: i32,
+    temperatureLow: i32,
     description: String,
     weekDescription: String,
 }
@@ -53,6 +53,15 @@ struct Weather {
 #[derive(Debug, Deserialize)]
 struct Surf {
     maxRating: u8,
+    fadedRating: u8,
+    period: u8,
+    height: f32,
+}
+
+#[derive(Debug, Deserialize)]
+struct Finance {
+    todayTotalDebits: f32,
+	yesterdayTotalDebits: f32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -60,18 +69,22 @@ struct Data {
     surf: Surf,
     weather: Weather,
     events: Vec<Event>,
+    finance: Finance,
+    now: DateTime::<Utc>,
 }
+
 const LINE_PADDING:u32 = 1;
 const PARAGRAPH_PADDING:u32 = 10;
-const ICON_SIZE:u32 = 40;
+const ICON_SIZE:u32 = 50;
 const MARGIN:u32 = 20;
 const WIDTH:u32 = 600;
 const CONTENT_WIDTH:u32 = WIDTH - (2 * MARGIN);
-const EVENT_TIME_WIDTH:u32 = 60;
+const EVENT_TIME_WIDTH:u32 = 80;
 const EVENT_CONTENT_MARGIN:u32 = MARGIN + ICON_SIZE + MARGIN;
 const EVENT_CONTENT_WIDTH:u32 = WIDTH - EVENT_CONTENT_MARGIN - MARGIN;
 const HEIGHT:u32 = 800;
-const WEATHER_OFFSET:u32 = HEIGHT - 150;
+const WEATHER_OFFSET:u32 = HEIGHT - 200;
+const FINANCE_OFFSET:u32 = HEIGHT - 300;
 
 fn calculate_glyph_width(font: &Font, scale: Scale, text: &str) -> u32 {
     let glyphs: Vec<_> = font
@@ -108,10 +121,10 @@ fn draw_text_block(image: &mut GrayImage, color: Luma<u8>, font: &Font, scale: S
         draw_text_mut(image, color, x, y + (i as u32 * height), scale, &font, &line.trim_right());
     }
 
-    height
+    height * lines.len() as u32
 }
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() {
     openssl_probe::init_ssl_cert_env_vars();
 
     let serif_font = Font::from_bytes(include_bytes!("../fonts/Bookerly-Regular.ttf") as &[u8]).expect("Error constructing Font");
@@ -124,15 +137,50 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let mut image = GrayImage::new(600, 800);
     draw_filled_rect_mut(&mut image, Rect::at(0, 0).of_size(600, 800), background_color);
 
-    let scale = Scale::uniform(20.0);
-    let small_scale = Scale::uniform(10.0);
+    let scale = Scale::uniform(30.0);
+    let small_scale = Scale::uniform(15.0);
+    let large_scale = Scale::uniform(50.0);
     let icon_scale = Scale::uniform(ICON_SIZE as f32);
 
-    // TODO: handle network errors and rendering errors
-    //draw_text_block(&mut image, text_color_1, &font, scale, "Error!", WIDTH, 230, 300);
+    let mut response = match reqwest::get("https://blakwkb41l.execute-api.us-east-1.amazonaws.com/dev/summary") {
+        Ok(res) => res,
+        Err(e) => {
+            println!("error: {:?}", e);
+            draw_text_mut(&mut image, icon_color, (WIDTH / 2 - 20), 200, icon_scale, &icon_font, &"".to_string());
+            draw_text_mut(&mut image, icon_color, 220, 260, scale, &serif_font, &"Error pulling data.".to_string());
 
-    let data = reqwest::get("https://blakwkb41l.execute-api.us-east-1.amazonaws.com/dev/summary").unwrap().json::<Data>().unwrap();
-    let mut offset = MARGIN * 2;
+            let path = Path::new("image.png");
+            let file = File::create(path).unwrap();
+
+            let fout = &mut BufWriter::new(file);
+            let mut encoder = image::png::PNGEncoder::new(fout);
+            encoder.encode(&image, 600, 800, image::Gray(8));
+
+            return;
+        },
+    };
+
+    let data = match response.json::<Data>() {
+        Ok(data) => data,
+        Err(e) => {
+            println!("error: {:?}", e);
+            draw_text_mut(&mut image, icon_color, (WIDTH / 2 - 20), 200, icon_scale, &icon_font, &"".to_string());
+            draw_text_mut(&mut image, icon_color, 190, 260, scale, &serif_font, &"Error transforming data.".to_string());
+
+            let path = Path::new("image.png");
+            let file = File::create(path).unwrap();
+
+            let fout = &mut BufWriter::new(file);
+            let mut encoder = image::png::PNGEncoder::new(fout);
+            encoder.encode(&image, 600, 800, image::Gray(8));
+            return;
+        },
+    };
+
+    // Draw date
+    draw_text_mut(&mut image, text_color_1, WIDTH - MARGIN - (large_scale.x * 3.0) as u32, MARGIN, large_scale, &serif_font, &data.now.format("%b %e").to_string());
+
+    let mut offset = MARGIN + large_scale.x as u32 + LINE_PADDING;
     for event in data.events {
         let mut time_offset:u32 = 0;
 
@@ -150,16 +198,21 @@ fn main() -> Result<(), Box<std::error::Error>> {
     }
 
     // Draw surf
-    draw_text_mut(&mut image, icon_color, CONTENT_WIDTH - MARGIN, WEATHER_OFFSET - ICON_SIZE - MARGIN - 20, icon_scale, &icon_font, &"".to_string());
-    draw_text_mut(&mut image, background_color, CONTENT_WIDTH - MARGIN + (ICON_SIZE / 2) - 2, WEATHER_OFFSET - ICON_SIZE - 28, scale, &serif_font, &data.surf.maxRating.to_string());
+    draw_text_mut(&mut image, icon_color, MARGIN, offset, icon_scale, &icon_font, &"".to_string());
+    offset += draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("{}ft at {} seconds,", data.surf.height, data.surf.period).to_string(), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, offset);
+    offset += draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("{}-{} stars.", data.surf.maxRating, data.surf.fadedRating).to_string(), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, offset);
+
+    // Draw finance
+    draw_text_mut(&mut image, icon_color, MARGIN, FINANCE_OFFSET + LINE_PADDING, icon_scale, &icon_font, &"".to_string());
+    let finance_offset = draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("${} spent today, ${} yesterday.", data.finance.todayTotalDebits, data.finance.yesterdayTotalDebits), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, FINANCE_OFFSET);
 
     // Draw weather
-    draw_text_mut(&mut image, icon_color, MARGIN, WEATHER_OFFSET, icon_scale, &icon_font, &data.weather.faIcon);
-    let weather_offset = draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("{}-{}°C. {}", data.weather.temperatureLow, data.weather.temperatureHigh, data.weather.description), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, WEATHER_OFFSET);
+    draw_text_mut(&mut image, icon_color, MARGIN, WEATHER_OFFSET + LINE_PADDING, icon_scale, &icon_font, &data.weather.faIcon);
+    let weather_offset = draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("{} - {}°C. {}", data.weather.temperatureLow, data.weather.temperatureHigh, data.weather.description), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, WEATHER_OFFSET);
     draw_text_block(&mut image, text_color_1, &serif_font, scale, &data.weather.weekDescription, EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, WEATHER_OFFSET + weather_offset + PARAGRAPH_PADDING);
 
     // Draw render time
-    draw_text_mut(&mut image, text_color_1, WIDTH - MARGIN - MARGIN, HEIGHT - MARGIN, small_scale, &serif_font, &Local::now().format("%H:%M").to_string());
+    draw_text_mut(&mut image, text_color_1, WIDTH - MARGIN - MARGIN, HEIGHT - MARGIN, small_scale, &serif_font, &data.now.format("%H:%M").to_string());
 
     let path = Path::new("image.png");
     let file = File::create(path).unwrap();
@@ -167,7 +220,5 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let fout = &mut BufWriter::new(file);
     let mut encoder = image::png::PNGEncoder::new(fout);
     encoder.encode(&image, 600, 800, image::Gray(8));
-
-    return Ok(());
 }
 

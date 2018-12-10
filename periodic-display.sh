@@ -1,10 +1,8 @@
 #!/bin/sh
 
-enable_wifi
-./main
-disable_wifi
-lipc-wait-event com.lab126.powerd goingToScreenSaver
-eips -f -g image.png
+/etc/init.d/framework stop
+/etc/init.d/powerd stop
+/usr/sbin/mntroot rw
 
 enable_wifi() {
   lipc-set-prop com.lab126.cmd wirelessEnable 1
@@ -12,6 +10,18 @@ enable_wifi() {
 }
 
 disable_wifi() { lipc-set-prop com.lab126.cmd wirelessEnable 0; }
+
+while true;
+do
+  enable_wifi
+  ./main
+  disable_wifi
+
+  eips -f -g image.png
+
+  echo "sleeping for an hour"
+  sleep 3600
+done
 
 #suspend() {
   #log "WAITING TO SET ALARM"

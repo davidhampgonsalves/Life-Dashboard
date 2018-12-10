@@ -14,14 +14,21 @@ module.exports.fetchForecast = async () => {
   try {
     const key = R.trim(fs.readFileSync('creds/magicseaweed.txt', "utf8"));
 
-    const body = await rp({ uri: `http://magicseaweed.com/api/${key}/forecast/?spot_id=787` });
-    const w = JSON.parse(body);
-    const maxStars = R.pipe(
-			filterByToday,
-			R.pluck('solidRating'),
-			ratings => Math.max(...ratings))(w);
+    const forecasts = await Promise.all([
+      rp({ uri: `http://magicseaweed.com/api/${key}/forecast/?spot_id=787` }),
+      rp({ uri: `http://magicseaweed.com/api/${key}/forecast/?spot_id=787` }),
+    ]);
 
-    return { maxRating: maxStars };
+    return R.pipe(
+      R.map(JSON.parse),
+      R.flatten,
+			filterByToday,
+			f => ({
+          maxRating: Math.max(...R.pluck('solidRating', f)),
+          fadedRating: Math.max(...R.pluck('fadedRating', f)),
+          height: R.max(...R.map(R.path(["swell", "components", "combined", "height"]), f)),
+          period: R.max(...R.map(R.path(["swell", "components", "combined", "period"]), f)),
+        }))(forecasts);
   } catch (e) {
 		console.error(e);
     return {};

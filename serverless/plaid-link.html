@@ -1,0 +1,24 @@
+<button id="link-button">Link Account</button>
+<script
+src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+<script
+src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<script type="text/javascript">
+(function($) {
+  var handler = Plaid.create({
+    clientName: 'Plaid Quickstart',
+    env: 'development',
+    key: '8b49a2d5b9bc4549dc3ec081fc10a4',
+    product: ['auth', 'transactions'],
+    onSuccess: function(public_token, metadata) {
+      console.log("added", public_token);
+    },
+    onExit: function(err, metadata) {
+    },
+  });
+
+  $('#link-button').on('click', function(e) {
+    handler.open();
+  });
+})(jQuery);
+</script>

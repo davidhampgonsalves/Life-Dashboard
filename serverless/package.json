@@ -5,6 +5,7 @@
     "ical": "^0.5.0",
     "moment": "^2.22.1",
     "moment-timezone": "^0.5.16",
+    "plaid": "^2.10.0",
     "ramda": "^0.25.0",
     "request": "^2.85.0",
     "request-promise-native": "^1.0.5"

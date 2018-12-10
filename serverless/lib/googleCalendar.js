@@ -40,6 +40,7 @@ module.exports.fetchCalendarEvents = async (calendarID, icon="") => {
         description: e.description,
       };
 
+      console.log(e.start.date);
       if(R.has("dateTime", e.start)) {
         json.start = moment(e.start.dateTime).utc();
         json.end = moment(e.end.dateTime).utc();

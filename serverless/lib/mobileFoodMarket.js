@@ -15,8 +15,8 @@ module.exports.fetchMostRecentEvent = async () => {
     return {
       faIcon: "",
       title,
-			start: moment.tz(dateString, 'America/Halifax'),
-			end: moment.tz(dateString, 'America/Halifax').add(1, "days"),
+			start: moment.tz(dateString, 'America/Halifax').utc(),
+			end: moment.tz(dateString, 'America/Halifax').utc().add(1, "days"),
 		};
   } catch (e) {
 		console.error(e);

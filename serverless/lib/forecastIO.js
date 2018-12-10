@@ -27,7 +27,7 @@ module.exports.fetchForecast = async () => {
     const w = JSON.parse(body);
 
     return {
-      faIcon: iconToUnicode[w.daily.icon],
+      faIcon: iconToUnicode[w.hourly.icon],
       temperatureHigh: Math.round(w.daily.data[0].temperatureHigh),
       temperatureLow: Math.round(w.daily.data[0].temperatureLow),
       description: w.hourly.summary,

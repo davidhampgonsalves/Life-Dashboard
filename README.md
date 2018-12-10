@@ -1,5 +1,8 @@
 ## Kindle setup
 
+# Jailbreak and Setup SSH
+see (https://wiki.mobileread.com/wiki/Kindle4NTHacking)
+
 connect to usb ssh
 network settings, find RNDIS, change from DHCP to manual and ip: 192.168.15.201
 ```
@@ -12,17 +15,7 @@ ssh root@192.168.15.244
 ## Setup
 ### Transfer files to Kindle
 ```
-ssh root@192.168.15.244 "/usr/sbin/mntroot rw"
-scp periodic-display-init root@192.168.15.244:/etc/init.d/periodic-display-init
-scp periodic-display.sh root@192.168.15.244:/
-scp /Users/davidhamp-gonsalves/go/src/github.com/davidhampgonsalves/lifedashboard/main root@192.168.15.244:/main
-ssh root@192.168.15.244 << EOF
-	chmod 777 /periodic-display.sh
-	chmod 777 /etc/init.d/periodic-display-init
-	ln -sf /etc/init.d/periodic-display-init /etc/rc5.d/S97periodic-display
-	shutdown -r now
-	echo "all done"
-EOF
+install.sh
 ```
 (unplug)
 
