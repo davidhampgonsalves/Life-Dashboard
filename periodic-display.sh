@@ -1,8 +1,5 @@
 #!/bin/sh
 
-/etc/init.d/framework stop
-/etc/init.d/powerd stop
-/usr/sbin/mntroot rw
 
 enable_wifi() {
   lipc-set-prop com.lab126.cmd wirelessEnable 1
@@ -10,6 +7,17 @@ enable_wifi() {
 }
 
 disable_wifi() { lipc-set-prop com.lab126.cmd wirelessEnable 0; }
+
+eips 'In 1 minute the kindle framework will be stopped and SSH will no longer be running. Act accordingly'
+sleep 30
+eips 'Tick-Tock, 30 seconds remaining.'
+sleep 20
+eips '10 seconds remaining.'
+sleep 10
+
+/etc/init.d/framework stop
+/etc/init.d/powerd stop
+/usr/sbin/mntroot rw
 
 while true;
 do

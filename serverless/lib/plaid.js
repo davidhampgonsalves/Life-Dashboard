@@ -29,10 +29,10 @@ module.exports.fetchFinance = async () => {
 		const res = await plaidClient.getTransactions(access_token, yesterdayDateStr, todayDateStr, { account_ids: [account_id] });
 
 		const { transactions } = res;
-    const todaysTotalDebits = totalDebitsByDay(transactions, todayDateStr);
+    const todayTotalDebits = totalDebitsByDay(transactions, todayDateStr);
     const yesterdayTotalDebits = totalDebitsByDay(transactions, yesterdayDateStr);
 
-    return { todayCurrentDebits: round(todaysTotalDebits), yesterdayTotalDebits: round(yesterdayTotalDebits) };
+    return { todayTotalDebits: round(todayTotalDebits), yesterdayTotalDebits: round(yesterdayTotalDebits) };
   } catch (e) {
 		console.error(e);
     return {};
