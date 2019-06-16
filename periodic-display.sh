@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 enable_wifi() {
   lipc-set-prop com.lab126.cmd wirelessEnable 1
   while ! lipc-get-prop com.lab126.wifid cmState | grep -q CONNECTED; do sleep 1; done
@@ -8,16 +7,22 @@ enable_wifi() {
 
 disable_wifi() { lipc-set-prop com.lab126.cmd wirelessEnable 0; }
 
-eips 'In 1 minute the kindle framework will be stopped and SSH will no longer be running. Act accordingly'
-sleep 30
-eips 'Tick-Tock, 30 seconds remaining.'
-sleep 20
-eips '10 seconds remaining.'
-sleep 10
+#eips 'In 1 minute the kindle framework will be stopped and SSH will no longer be running. Act accordingly'
+#sleep 30
+#eips 'Tick-Tock, 30 seconds remaining.'
+#sleep 20
+#eips '10 seconds remaining.'
+#sleep 10
 
-/etc/init.d/framework stop
-/etc/init.d/powerd stop
+# stopping the framework makes it hard to push code and prevents it from being used part time as an e-reader
+#/etc/init.d/framework stop
+#/etc/init.d/powerd stop
 /usr/sbin/mntroot rw
+
+if [ ! -d "/opt/amazon/screen_saver/600x800" ]; then
+   mv /opt/amazon/screen_saver/600x800 /opt/amazon/screen_saver/600x800600x800_bak
+   mkdir /opt/amazon/screen_saver/600x800
+fi
 
 while true;
 do
@@ -25,10 +30,12 @@ do
   ./main
   disable_wifi
 
-  eips -f -g image.png
+  eips -f -g /image.png
+  # since we aren't stopping the framework
+  cp /image.png /opt/amazon/screen_saver/600x800/01N.png
 
-  echo "sleeping for an hour"
-  sleep 3600
+  echo "sleeping for 30 minutes"
+  sleep 1850
 done
 
 #suspend() {

@@ -7,17 +7,17 @@ const fs = require('fs');
 // https://darksky.net/dev/docs#forecast-request
 // clear-day, clear-night, rain, snow, sleet, wind, fog, cloudy, partly-cloudy-day, or partly-cloudy-night
 
-const iconToUnicode = {
-  "clear-day": "",
-  "clear-night": "",
-  rain: "",
-  snow: "",
-  sleet: "",
-  wind: "",
-  fog: "",
-  cloudy: "",
-  "partly-cloudy-day": "",
-  "partly-cloudy-night": "",
+const emojiToUnicode = {
+  "clear-day": "☀️",
+  "clear-night": "🌙",
+  rain: "🌂",
+  snow: "❄️",
+  sleet: "❄️",
+  fog: "🌫",
+  wind: "🎏",
+  cloudy: "⛅️",
+  "partly-cloudy-day": "⛅️",
+  "partly-cloudy-night": "⛅️",
 };
 module.exports.fetchForecast = async () => {
   try {
@@ -27,7 +27,7 @@ module.exports.fetchForecast = async () => {
     const w = JSON.parse(body);
 
     return {
-      faIcon: iconToUnicode[w.hourly.icon],
+      emoji: emojiToUnicode[w.hourly.icon],
       temperatureHigh: Math.round(w.daily.data[0].temperatureHigh),
       temperatureLow: Math.round(w.daily.data[0].temperatureLow),
       description: w.hourly.summary,

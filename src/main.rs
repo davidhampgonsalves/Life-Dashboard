@@ -6,30 +6,24 @@ extern crate openssl_probe;
 extern crate serde;
 extern crate serde_json;
 extern crate rusttype;
+extern crate rand;
 
 #[macro_use]
 extern crate serde_derive;
 
-use std::panic;
+use rand::seq::SliceRandom;
+use std::fs::{self, DirEntry};
 use chrono::prelude::*;
-use serde_json::Error;
-use std::sync::mpsc;
 use std::fs::File;
 use std::path::Path;
 use std::io::BufWriter;
-use std::thread;
-use image::{Luma, GrayImage};
+use image::{Luma, LumaA, GrayAlphaImage};
 use imageproc::rect::Rect;
 use imageproc::drawing::{
-    draw_cross_mut,
-    draw_line_segment_mut,
-    draw_hollow_rect_mut,
     draw_filled_rect_mut,
-    draw_hollow_circle_mut,
-    draw_filled_circle_mut,
     draw_text_mut,
 };
-use rusttype::{Font, FontCollection, Scale, point};
+use rusttype::{Font, Scale, point};
 use chrono::{DateTime, FixedOffset};
 
 #[derive(Debug, Deserialize)]
@@ -37,13 +31,13 @@ struct Event {
     faIcon: String,
     title: String,
     description: Option<String>,
-    start: Option<DateTime::<FixedOffset>>,
-    end: Option<DateTime::<FixedOffset>>,
+    start: Option<DateTime<FixedOffset>>,
+    end: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Debug, Deserialize)]
 struct Weather {
-    faIcon: String,
+    emoji: String,
     temperatureHigh: i32,
     temperatureLow: i32,
     description: String,
@@ -61,7 +55,7 @@ struct Surf {
 #[derive(Debug, Deserialize)]
 struct Finance {
     todayTotalDebits: f32,
-	yesterdayTotalDebits: f32,
+    yesterdayTotalDebits: f32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,21 +64,14 @@ struct Data {
     weather: Weather,
     events: Vec<Event>,
     finance: Finance,
-    now: DateTime::<Utc>,
+    now: DateTime<Utc>,
 }
 
-const LINE_PADDING:u32 = 1;
-const PARAGRAPH_PADDING:u32 = 10;
-const ICON_SIZE:u32 = 50;
+const LINE_PADDING:u32 = 0;
+const PARAGRAPH_PADDING:u32 = 20;
 const MARGIN:u32 = 20;
 const WIDTH:u32 = 600;
-const CONTENT_WIDTH:u32 = WIDTH - (2 * MARGIN);
-const EVENT_TIME_WIDTH:u32 = 80;
-const EVENT_CONTENT_MARGIN:u32 = MARGIN + ICON_SIZE + MARGIN;
-const EVENT_CONTENT_WIDTH:u32 = WIDTH - EVENT_CONTENT_MARGIN - MARGIN;
 const HEIGHT:u32 = 800;
-const WEATHER_OFFSET:u32 = HEIGHT - 200;
-const FINANCE_OFFSET:u32 = HEIGHT - 300;
 
 fn calculate_glyph_width(font: &Font, scale: Scale, text: &str) -> u32 {
     let glyphs: Vec<_> = font
@@ -100,13 +87,13 @@ fn calculate_glyph_width(font: &Font, scale: Scale, text: &str) -> u32 {
     max_x as u32
 }
 
-fn draw_text_block(image: &mut GrayImage, color: Luma<u8>, font: &Font, scale: Scale, text: &str, width: u32, x: u32, y: u32) -> u32 {
+fn draw_text_block(image: &mut GrayAlphaImage, color: LumaA<u8>, font: &Font, scale: Scale, text: &str, width: u32, x: u32, y: u32) -> u32 {
     let mut lines: Vec<String> = vec!["".to_string()];
 
     for word in text.split(" ") {
         let line_width = calculate_glyph_width(font, scale, &format!("{} {}", lines.last().unwrap(), word));
 
-        if(line_width > width) {
+        if line_width > width {
             lines.push("".to_string());
         }
 
@@ -124,30 +111,50 @@ fn draw_text_block(image: &mut GrayImage, color: Luma<u8>, font: &Font, scale: S
     height * lines.len() as u32
 }
 
+fn format(date: DateTime<FixedOffset>) -> String {
+    if date.minute() == 0 {
+        date.format("%-H").to_string()
+    } else {
+        date.format("%-H:%M").to_string()
+    }
+}
+
+trait ParagraghDrawer {
+    fn paragraph(&mut self, text: &str);
+}
+
+struct Draw {
+    offset: u32,
+    image: GrayAlphaImage,
+}
+
+impl ParagraghDrawer for Draw {
+    fn paragraph(&mut self, text: &str) {
+        let scale = Scale::uniform(40.0);
+        let font = Font::from_bytes(include_bytes!("../fonts/OpenSans-Regular-AndroidEmoji.ttf") as &[u8]).expect("Error constructing Font");
+        let color = LumaA([0u8, 100]);
+
+        self.offset += draw_text_block(&mut self.image, color, &font, scale, text, WIDTH - (2 * MARGIN), MARGIN, self.offset) + PARAGRAPH_PADDING;
+    }
+}
+
 fn main() {
     openssl_probe::init_ssl_cert_env_vars();
 
-    let serif_font = Font::from_bytes(include_bytes!("../fonts/Bookerly-Regular.ttf") as &[u8]).expect("Error constructing Font");
-    let icon_font = Font::from_bytes(include_bytes!("../fonts/fa-solid-900.ttf") as &[u8]).expect("Error constructing Font");
+    let font = Font::from_bytes(include_bytes!("../fonts/OpenSans-Regular-AndroidEmoji.ttf") as &[u8]).expect("Error constructing Font");
 
-    let background_color = Luma([255u8]);
-    let text_color_1 = Luma([0u8]);
-    let icon_color = Luma([100u8]);
+    let background_color = LumaA([255u8, 255u8]);
+    let color = LumaA([0u8, 255u8]);
 
-    let mut image = GrayImage::new(600, 800);
+    let mut image = GrayAlphaImage::new(600, 800);
     draw_filled_rect_mut(&mut image, Rect::at(0, 0).of_size(600, 800), background_color);
 
-    let scale = Scale::uniform(30.0);
-    let small_scale = Scale::uniform(15.0);
-    let large_scale = Scale::uniform(50.0);
-    let icon_scale = Scale::uniform(ICON_SIZE as f32);
-
+    let scale = Scale::uniform(38.0);
     let mut response = match reqwest::get("https://blakwkb41l.execute-api.us-east-1.amazonaws.com/dev/summary") {
         Ok(res) => res,
         Err(e) => {
             println!("error: {:?}", e);
-            draw_text_mut(&mut image, icon_color, (WIDTH / 2 - 20), 200, icon_scale, &icon_font, &"".to_string());
-            draw_text_mut(&mut image, icon_color, 220, 260, scale, &serif_font, &"Error pulling data.".to_string());
+            draw_text_mut(&mut image, color, 220, 260, scale, &font, &"Error pulling data.".to_string());
 
             let path = Path::new("image.png");
             let file = File::create(path).unwrap();
@@ -164,8 +171,7 @@ fn main() {
         Ok(data) => data,
         Err(e) => {
             println!("error: {:?}", e);
-            draw_text_mut(&mut image, icon_color, (WIDTH / 2 - 20), 200, icon_scale, &icon_font, &"".to_string());
-            draw_text_mut(&mut image, icon_color, 190, 260, scale, &serif_font, &"Error transforming data.".to_string());
+            draw_text_mut(&mut image, color, 190, 260, scale, &font, &"Error transforming data.".to_string());
 
             let path = Path::new("image.png");
             let file = File::create(path).unwrap();
@@ -178,47 +184,64 @@ fn main() {
     };
 
     // Draw date
-    draw_text_mut(&mut image, text_color_1, WIDTH - MARGIN - (large_scale.x * 3.0) as u32, MARGIN, large_scale, &serif_font, &data.now.format("%b %e").to_string());
+    let large_scale = Scale::uniform(50.0);
+    let date_str = &data.now.format("%b %e").to_string();
+    let date_margin = WIDTH - MARGIN - calculate_glyph_width(&font, large_scale, date_str);
+    draw_text_mut(&mut image, color, date_margin, MARGIN, large_scale, &font, date_str);
 
-    let mut offset = MARGIN + large_scale.x as u32 + LINE_PADDING;
+    let mut draw = Draw {
+        offset: 80,
+        image: image,
+    };
+
     for event in data.events {
-        let mut time_offset:u32 = 0;
-
         if let Some(start) = event.start {
-            time_offset = EVENT_TIME_WIDTH;
-            draw_text_mut(&mut image, text_color_1, MARGIN, offset, scale, &serif_font, &start.format("%H:%M").to_string());
-            draw_text_mut(&mut image, text_color_1, MARGIN, offset + scale.y as u32 + LINE_PADDING, scale, &serif_font, &event.end.unwrap().format("%H:%M").to_string());
+            draw.paragraph(&format!("📅 {} 🕘{} - {}.", &event.title, format(start), format(event.end.unwrap())));
+        } else {
+            draw.paragraph(&format!("📅 {}", &event.title));
         }
-        draw_text_mut(&mut image, icon_color, MARGIN + time_offset, offset, icon_scale, &icon_font, &event.faIcon);
-
-        offset += draw_text_block(&mut image, text_color_1, &serif_font, scale, &event.title, EVENT_CONTENT_WIDTH - time_offset, EVENT_CONTENT_MARGIN + time_offset, offset);
-        offset += draw_text_block(&mut image, text_color_1, &serif_font, scale, &event.description.unwrap_or("".to_string()), EVENT_CONTENT_WIDTH - time_offset, EVENT_CONTENT_MARGIN + time_offset, offset);
-
-        offset += PARAGRAPH_PADDING;
     }
 
-    // Draw surf
-    draw_text_mut(&mut image, icon_color, MARGIN, offset, icon_scale, &icon_font, &"".to_string());
-    offset += draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("{}ft at {} seconds,", data.surf.height, data.surf.period).to_string(), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, offset);
-    offset += draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("{}-{} stars.", data.surf.maxRating, data.surf.fadedRating).to_string(), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, offset);
+    if data.surf.maxRating > 0 {
+        draw.paragraph(&format!("🌊 {}{} {} ft at {} secs.", "▪".repeat(data.surf.maxRating as usize), "▫".repeat(5 - data.surf.maxRating as usize), data.surf.height, data.surf.period).to_string());
+    }
 
-    // Draw finance
-    draw_text_mut(&mut image, icon_color, MARGIN, FINANCE_OFFSET + LINE_PADDING, icon_scale, &icon_font, &"".to_string());
-    let finance_offset = draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("${} spent today, ${} yesterday.", data.finance.todayTotalDebits, data.finance.yesterdayTotalDebits), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, FINANCE_OFFSET);
+    if data.finance.todayTotalDebits + data.finance.yesterdayTotalDebits == 0 as f32 {
+        draw.paragraph(&format!("💲 👏 Zero spent recently. 👏"));
+    } else if data.finance.todayTotalDebits > 0 as f32 {
+        draw.paragraph(&format!("💲 {} today, {} yesterday. 🏭", data.finance.todayTotalDebits, data.finance.yesterdayTotalDebits));
+    } else {
+        draw.paragraph(&format!("💲 {} yesterday. 🏭", data.finance.yesterdayTotalDebits));
+    }
 
-    // Draw weather
-    draw_text_mut(&mut image, icon_color, MARGIN, WEATHER_OFFSET + LINE_PADDING, icon_scale, &icon_font, &data.weather.faIcon);
-    let weather_offset = draw_text_block(&mut image, text_color_1, &serif_font, scale, &format!("{} - {}°C. {}", data.weather.temperatureLow, data.weather.temperatureHigh, data.weather.description), EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, WEATHER_OFFSET);
-    draw_text_block(&mut image, text_color_1, &serif_font, scale, &data.weather.weekDescription, EVENT_CONTENT_WIDTH, EVENT_CONTENT_MARGIN, WEATHER_OFFSET + weather_offset + PARAGRAPH_PADDING);
+    draw.paragraph(&format!("{} {} - {}°C. {}", &data.weather.emoji, data.weather.temperatureLow, data.weather.temperatureHigh, data.weather.description));
+    draw.paragraph(&data.weather.weekDescription);
 
-    // Draw render time
-    draw_text_mut(&mut image, text_color_1, WIDTH - MARGIN - MARGIN, HEIGHT - MARGIN, small_scale, &serif_font, &data.now.format("%H:%M").to_string());
+    // pokemon
+    let remaining_height = HEIGHT - draw.offset - (2 * MARGIN);
+    let max_width = (WIDTH / 2) - (2 * MARGIN);
+    if remaining_height > 100 {
+        let paths: Vec<_> = fs::read_dir(&Path::new("pokemon/front/")).unwrap().map(|maybe_path| maybe_path.unwrap().path()).collect();
+        let path = paths.choose(&mut rand::thread_rng()).unwrap();
+        let file_name = path.to_str().unwrap().replace("pokemon/front/", "");
+
+        let mut front_img = image::open(&Path::new(&format!("pokemon/front/{}", file_name))).ok().expect("Opening front image failed");
+        let mut back_img = image::open(&Path::new(&format!("pokemon/back/{}", file_name))).ok().expect("Opening back image failed");
+
+        front_img = front_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
+        back_img = back_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
+
+        image::imageops::overlay(&mut draw.image, &back_img.to_luma_alpha(), MARGIN, draw.offset + MARGIN);
+        image::imageops::overlay(&mut draw.image, &front_img.to_luma_alpha(), (WIDTH / 2) + MARGIN, draw.offset + MARGIN);
+    }
+
+    let small_scale = Scale::uniform(15.0);
+    draw_text_mut(&mut draw.image, color, WIDTH - MARGIN - MARGIN, HEIGHT - MARGIN, small_scale, &font, &data.now.format("%H:%M").to_string());
 
     let path = Path::new("image.png");
     let file = File::create(path).unwrap();
 
     let fout = &mut BufWriter::new(file);
-    let mut encoder = image::png::PNGEncoder::new(fout);
-    encoder.encode(&image, 600, 800, image::Gray(8));
+    let encoder = image::png::PNGEncoder::new(fout);
+    encoder.encode(&draw.image, 600, 800, image::GrayA(8));
 }
-

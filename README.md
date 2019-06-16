@@ -1,7 +1,8 @@
 ## Kindle setup
 
 # Jailbreak and Setup SSH
-see (https://wiki.mobileread.com/wiki/Kindle4NTHacking)
+see (https://wiki.mobileread.com/wiki/Kindle4NTHacking) and if bricked then use Kubrick in VM to restore.
+
 
 connect to usb ssh
 network settings, find RNDIS, change from DHCP to manual and ip: 192.168.15.201
