@@ -15,9 +15,9 @@ const emojiToUnicode = {
   sleet: "❄️",
   fog: "🌫",
   wind: "🎏",
-  cloudy: "⛅️",
-  "partly-cloudy-day": "⛅️",
-  "partly-cloudy-night": "⛅️",
+  cloudy: "☁",
+  "partly-cloudy-day": "⛅",
+  "partly-cloudy-night": "⛅",
 };
 module.exports.fetchForecast = async () => {
   try {

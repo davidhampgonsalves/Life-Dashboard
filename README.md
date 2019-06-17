@@ -1,8 +1,13 @@
-## Kindle setup
+# Life Dashboard
+Heads up Display for every day life.
 
-# Jailbreak and Setup SSH
-see (https://wiki.mobileread.com/wiki/Kindle4NTHacking) and if bricked then use Kubrick in VM to restore.
+# Setup
 
+## USB
+transfer `pokemon` folder to kindle.
+
+## Jailbreak and Setup SSH
+See (https://wiki.mobileread.com/wiki/Kindle4NTHacking) and if bricked then use Kubrick in VM to restore.
 
 connect to usb ssh
 network settings, find RNDIS, change from DHCP to manual and ip: 192.168.15.201
@@ -11,23 +16,22 @@ network settings, find RNDIS, change from DHCP to manual and ip: 192.168.15.201
 ifconfig # search for device with 192.168.15.201
 sudo ifconfig en5 192.168.15.201
 ssh root@192.168.15.244
+/usr/sbin/mntroot rw
+mv /mnt/base-us/pokemon/ /
 ```
-
-## Setup
-### Transfer files to Kindle
-```
-install.sh
-```
-(unplug)
-
 
 ## Cross Compiling to Kindle (ARM-7 Soft Float)
-We need a statically compiled binary to run in the Kindle. There are many ways to do this but on OSX I use docker(via https://github.com/messense/rust-musl-cross) to avoid poluting my system with all the required bits and having to compile each requirement seperately.
+We need a statically compiled binary to run in the Kindle. There are many ways to do this but on OSX I use docker(via https://github.com/messense/rust-musl-cross) to avoid polluting my system with all the required bits and having to compile each requirement seperately.
 
 ```
 docker pull messense/rust-musl-cross:arm-musleabi
 alias rust-musl-builder='docker run --rm -it -v "$(pwd)":/home/rust/src messense/rust-musl-cross:arm-musleabi'
 rust-musl-builder cargo build --release
+```
+
+# Transfer files to Kindle
+```
+install.sh
 ```
 
 ## Copy books to kindle vis SCP

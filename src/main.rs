@@ -18,6 +18,7 @@ use std::fs::File;
 use std::path::Path;
 use std::io::BufWriter;
 use image::{Luma, LumaA, GrayAlphaImage};
+use image::GenericImageView;
 use imageproc::rect::Rect;
 use imageproc::drawing::{
     draw_filled_rect_mut,
@@ -68,7 +69,7 @@ struct Data {
 }
 
 const LINE_PADDING:u32 = 0;
-const PARAGRAPH_PADDING:u32 = 20;
+const PARAGRAPH_PADDING:u32 = 25;
 const MARGIN:u32 = 20;
 const WIDTH:u32 = 600;
 const HEIGHT:u32 = 800;
@@ -130,7 +131,7 @@ struct Draw {
 
 impl ParagraghDrawer for Draw {
     fn paragraph(&mut self, text: &str) {
-        let scale = Scale::uniform(40.0);
+        let scale = Scale::uniform(50.0);
         let font = Font::from_bytes(include_bytes!("../fonts/OpenSans-Regular-AndroidEmoji.ttf") as &[u8]).expect("Error constructing Font");
         let color = LumaA([0u8, 100]);
 
@@ -184,13 +185,13 @@ fn main() {
     };
 
     // Draw date
-    let large_scale = Scale::uniform(50.0);
+    let large_scale = Scale::uniform(60.0);
     let date_str = &data.now.format("%b %e").to_string();
     let date_margin = WIDTH - MARGIN - calculate_glyph_width(&font, large_scale, date_str);
     draw_text_mut(&mut image, color, date_margin, MARGIN, large_scale, &font, date_str);
 
     let mut draw = Draw {
-        offset: 80,
+        offset: 100,
         image: image,
     };
 
@@ -215,9 +216,8 @@ fn main() {
     }
 
     draw.paragraph(&format!("{} {} - {}°C. {}", &data.weather.emoji, data.weather.temperatureLow, data.weather.temperatureHigh, data.weather.description));
-    draw.paragraph(&data.weather.weekDescription);
 
-    // pokemon
+    // pokemon space filler
     let remaining_height = HEIGHT - draw.offset - (2 * MARGIN);
     let max_width = (WIDTH / 2) - (2 * MARGIN);
     if remaining_height > 100 {
@@ -231,8 +231,10 @@ fn main() {
         front_img = front_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
         back_img = back_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
 
-        image::imageops::overlay(&mut draw.image, &back_img.to_luma_alpha(), MARGIN, draw.offset + MARGIN);
-        image::imageops::overlay(&mut draw.image, &front_img.to_luma_alpha(), (WIDTH / 2) + MARGIN, draw.offset + MARGIN);
+        let space_between_x = (WIDTH - front_img.width() - back_img.width()) / 3;
+        let space_between_y = (remaining_height - front_img.height()) / 2;
+        image::imageops::overlay(&mut draw.image, &back_img.to_luma_alpha(), space_between_x, draw.offset + space_between_y);
+        image::imageops::overlay(&mut draw.image, &front_img.to_luma_alpha(), (WIDTH + space_between_x) / 2, draw.offset + space_between_y);
     }
 
     let small_scale = Scale::uniform(15.0);
@@ -243,5 +245,7 @@ fn main() {
 
     let fout = &mut BufWriter::new(file);
     let encoder = image::png::PNGEncoder::new(fout);
-    encoder.encode(&draw.image, 600, 800, image::GrayA(8));
+    //let gray_img = image::DynamicImage::ImageLumaA8(draw.image);
+    let grayscale_img = image::imageops::grayscale(&draw.image);
+    encoder.encode(&grayscale_img, 600, 800, image::Gray(8));
 }
