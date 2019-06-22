@@ -14,8 +14,8 @@ const plaid = require('./lib/plaid');
 module.exports.hello = async (event, context, callback) => {
   let events = await Promise.all([
     google.fetchCalendarEvents('davidhampgonsalves@gmail.com'),
-    //google.fetchCalendarEvents('limbl4hcvdmioc654k3g72pbeg@group.calendar.google.com', ""),
-    ical.fetchCalendarEvents("https://recollect.a.ssl.fastly.net/api/places/D23C8C62-A1B4-11E6-8E02-82F09D80A4F0/services/330/events.en.ics", ""),
+    google.fetchCalendarEvents('ashleyhampgonsalves@gmail.com'),
+    ical.fetchCalendarEvents("https://recollect.a.ssl.fastly.net/api/places/D23C8C62-A1B4-11E6-8E02-82F09D80A4F0/services/330/events.en.ics"),
     mobileFoodMarket.fetchMostRecentEvent(),
     schoolClosures.fetchMostRecentEvent(),
   ]);
