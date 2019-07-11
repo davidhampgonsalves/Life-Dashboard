@@ -1,8 +1,10 @@
-<img align="right" src="https://github.com/davidhampgonsalves/life-dashboard/raw/master/life-dashboard.png"/>
 
 # Life Dashboard
 Low power, heads up display for every day life running on a Kindle.
 
+<img align="right" src="https://github.com/davidhampgonsalves/life-dashboard/raw/master/life-dashboard.jpg"/>
+
+# Details
 Second hand Kindles are waiting in drawers for someone to repurpose them into something great. Boasting large e-ink screens, wifi connectivity and ARM processors they are an amazing hacking platform.
 
 In my case I created an information panel summarizing my day such as my calendar, surf and weather forecast, garbage schedule, school closures, etc. My favorite part is that any extra space is filled with a random Pokémon sprite which my _kids_(not me) like to come check in on.
@@ -10,6 +12,8 @@ In my case I created an information panel summarizing my day such as my calendar
 The project uses a serverless backend to collate data from external services and on the Kindle itself [Rust](https://www.rust-lang.org/) code (cross compiled via docker) fetches and typesets the data into an image.
 
 I built a stand rather then a more standard frame because the e-reader functionality of the Kindle is still present and can be used without modification. I also thought it was important to avoid obscuring the original device and celebrate its reuse.
+
+More details can be found on my [blog](https://www.davidhampgonsalves.com/life-dashboard/).
 
 # Setup
 
