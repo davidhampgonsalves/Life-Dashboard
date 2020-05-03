@@ -12,12 +12,12 @@ extern crate rand;
 extern crate serde_derive;
 
 use rand::seq::SliceRandom;
-use std::fs::{self, DirEntry};
+use std::fs;
 use chrono::prelude::*;
 use std::fs::File;
 use std::path::Path;
 use std::io::BufWriter;
-use image::{Luma, LumaA, GrayAlphaImage};
+use image::{LumaA, GrayAlphaImage};
 use image::GenericImageView;
 use imageproc::rect::Rect;
 use imageproc::drawing::{
@@ -29,7 +29,6 @@ use chrono::{DateTime, FixedOffset};
 
 #[derive(Debug, Deserialize)]
 struct Event {
-    faIcon: String,
     title: String,
     description: Option<String>,
     start: Option<DateTime<FixedOffset>>,
@@ -37,6 +36,7 @@ struct Event {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
 struct Weather {
     emoji: String,
     temperatureHigh: i32,
@@ -46,6 +46,7 @@ struct Weather {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
 struct Surf {
     maxRating: u8,
     fadedRating: u8,
@@ -54,6 +55,7 @@ struct Surf {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
 struct Finance {
     todayTotalDebits: f32,
     yesterdayTotalDebits: f32,
@@ -61,10 +63,10 @@ struct Finance {
 
 #[derive(Debug, Deserialize)]
 struct Data {
-    surf: Surf,
-    weather: Weather,
-    events: Vec<Event>,
-    finance: Finance,
+    surf: Option<Surf>,
+    weather: Option<Weather>,
+    events: Option<Vec<Event>>,
+    finance: Option<Finance>,
     now: DateTime<Utc>,
 }
 
@@ -106,7 +108,7 @@ fn draw_text_block(image: &mut GrayAlphaImage, color: LumaA<u8>, font: &Font, sc
     let height =(v_metrics.ascent - v_metrics.descent).ceil() as u32 + LINE_PADDING;
 
     for (i, line) in lines.iter().enumerate() {
-        draw_text_mut(image, color, x, y + (i as u32 * height), scale, &font, &line.trim_right());
+        draw_text_mut(image, color, x, y + (i as u32 * height), scale, &font, &line.trim_end());
     }
 
     height * lines.len() as u32
@@ -161,8 +163,8 @@ fn main() {
             let file = File::create(path).unwrap();
 
             let fout = &mut BufWriter::new(file);
-            let mut encoder = image::png::PNGEncoder::new(fout);
-            encoder.encode(&image, 600, 800, image::Gray(8));
+            let encoder = image::png::PNGEncoder::new(fout);
+            let _result = encoder.encode(&image, 600, 800, image::Gray(8));
 
             return;
         },
@@ -178,8 +180,8 @@ fn main() {
             let file = File::create(path).unwrap();
 
             let fout = &mut BufWriter::new(file);
-            let mut encoder = image::png::PNGEncoder::new(fout);
-            encoder.encode(&image, 600, 800, image::Gray(8));
+            let encoder = image::png::PNGEncoder::new(fout);
+            let _result = encoder.encode(&image, 600, 800, image::Gray(8));
             return;
         },
     };
@@ -195,27 +197,35 @@ fn main() {
         image: image,
     };
 
-    for event in data.events {
-        if let Some(start) = event.start {
-            draw.paragraph(&format!("📅 {} 🕘{} - {}.", &event.title, format(start), format(event.end.unwrap())));
-        } else {
-            draw.paragraph(&format!("📅 {}", &event.title));
+    if let Some(events) = data.events {
+        for event in events {
+            if let Some(start) = event.start {
+                draw.paragraph(&format!("📅 {} 🕘{} - {}.", &event.title, format(start), format(event.end.unwrap())));
+            } else {
+                draw.paragraph(&format!("📅 {}", &event.title));
+            }
         }
     }
 
-    if data.surf.maxRating > 0 {
-        draw.paragraph(&format!("🌊 {}{} {} ft at {} secs.", "▪".repeat(data.surf.maxRating as usize), "▫".repeat(5 - data.surf.maxRating as usize), data.surf.height, data.surf.period).to_string());
+    if let Some(surf) = data.surf {
+        if surf.maxRating > 0 {
+            draw.paragraph(&format!("🌊 {}{} {} ft at {} secs.", "▪".repeat(surf.maxRating as usize), "▫".repeat(5 - surf.maxRating as usize), surf.height, surf.period).to_string());
+        }
     }
 
-    if data.finance.todayTotalDebits + data.finance.yesterdayTotalDebits == 0 as f32 {
-        draw.paragraph(&format!("💲 👏 Zero spent recently. 👏"));
-    } else if data.finance.todayTotalDebits > 0 as f32 {
-        draw.paragraph(&format!("💲 {} today, {} yesterday. 🏭", data.finance.todayTotalDebits, data.finance.yesterdayTotalDebits));
-    } else {
-        draw.paragraph(&format!("💲 {} yesterday. 🏭", data.finance.yesterdayTotalDebits));
+    if let Some(finance) = data.finance {
+        if finance.todayTotalDebits + finance.yesterdayTotalDebits == 0 as f32 {
+            draw.paragraph(&format!("💲 👏 Zero spent recently. 👏"));
+        } else if finance.todayTotalDebits > 0 as f32 {
+            draw.paragraph(&format!("💲 {} today, {} yesterday. 🏭", finance.todayTotalDebits, finance.yesterdayTotalDebits));
+        } else {
+            draw.paragraph(&format!("💲 {} yesterday. 🏭", finance.yesterdayTotalDebits));
+        }
     }
 
-    draw.paragraph(&format!("{} {} - {}°C. {}", &data.weather.emoji, data.weather.temperatureLow, data.weather.temperatureHigh, data.weather.description));
+    if let Some(weather) = data.weather {
+        draw.paragraph(&format!("{} {} - {}°C. {}", &weather.emoji, weather.temperatureLow, weather.temperatureHigh, weather.description));
+    }
 
     // pokemon space filler
     let remaining_height = HEIGHT - draw.offset - (2 * MARGIN);
@@ -247,5 +257,5 @@ fn main() {
     let encoder = image::png::PNGEncoder::new(fout);
     //let gray_img = image::DynamicImage::ImageLumaA8(draw.image);
     let grayscale_img = image::imageops::grayscale(&draw.image);
-    encoder.encode(&grayscale_img, 600, 800, image::Gray(8));
+    let _result = encoder.encode(&grayscale_img, 600, 800, image::Gray(8));
 }

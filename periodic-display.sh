@@ -8,13 +8,15 @@ disable_wifi() { lipc-set-prop com.lab126.cmd wirelessEnable 0; }
 
 cd /
 /usr/sbin/mntroot rw
+echo "disable powerd"
 /etc/init.d/powerd stop
 
+echo "enabling wifi"
 enable_wifi
+echo "running main"
 ./main
+echo "disabling wifi"
 disable_wifi
 
+echo "drawing image"
 eips -f -g /image.png
-
-echo "sleeping for 30 minutes"
-sleep 1850

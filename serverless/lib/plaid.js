@@ -21,10 +21,13 @@ module.exports.fetchFinance = async () => {
     // use this code to generate an access_token which will not expire for future use.
     // then you can make a request to get transactions without accounts to determine the account ids
     //
-    // let res = await plaidClient.exchangePublicToken("<from link>");
-    // console.log("TOKEN", res.access_token);
-    // res = await plaidClient.getTransactions(access_token, yesterdayDateStr, todayDateStr, { account_ids: [account_id] });
-    // console.log(res);
+    //const plaidClient = new plaid.Client(client_id, secret, public_key, plaid.environments.development, {version: '2018-05-22'});
+    //let res = await plaidClient.exchangePublicToken("public-development-04ce89ad-bbf2-411c-9bba-c3ecc78216e8");
+    //console.log("TOKEN", res.access_token);
+    //const todayDateStr = moment().tz('America/Halifax').format("YYYY-MM-DD");
+    //const yesterdayDateStr = moment().tz('America/Halifax').subtract(1, "days").format("YYYY-MM-DD");
+    //res = await plaidClient.getTransactions(res.access_token, yesterdayDateStr, todayDateStr);
+    //console.log(res);
 
     const plaidClient = new plaid.Client(client_id, secret, public_key, plaid.environments.development, {version: '2018-05-22'});
 
