@@ -19,6 +19,7 @@ use std::path::Path;
 use std::io::BufWriter;
 use image::{LumaA, GrayAlphaImage};
 use image::GenericImageView;
+use image::ColorType;
 use imageproc::rect::Rect;
 use imageproc::drawing::{
     draw_filled_rect_mut,
@@ -131,10 +132,14 @@ struct Draw {
     image: GrayAlphaImage,
 }
 
+const SM:f32 = 15.0;
+const MD:f32 = 40.0;
+const LG:f32 = 50.0;
+
 impl ParagraghDrawer for Draw {
     fn paragraph(&mut self, text: &str) {
-        let scale = Scale::uniform(50.0);
-        let font = Font::from_bytes(include_bytes!("../fonts/OpenSans-Regular-AndroidEmoji.ttf") as &[u8]).expect("Error constructing Font");
+        let scale = Scale::uniform(MD);
+        let font = Font::try_from_bytes(include_bytes!("../fonts/Symbola-AjYx.ttf") as &[u8]).expect("Error constructing Font");
         let color = LumaA([0u8, 100]);
 
         self.offset += draw_text_block(&mut self.image, color, &font, scale, text, WIDTH - (2 * MARGIN), MARGIN, self.offset) + PARAGRAPH_PADDING;
@@ -144,7 +149,7 @@ impl ParagraghDrawer for Draw {
 fn main() {
     openssl_probe::init_ssl_cert_env_vars();
 
-    let font = Font::from_bytes(include_bytes!("../fonts/OpenSans-Regular-AndroidEmoji.ttf") as &[u8]).expect("Error constructing Font");
+    let font = Font::try_from_bytes(include_bytes!("../fonts/Symbola-AjYx.ttf") as &[u8]).expect("Error constructing Font");
 
     let background_color = LumaA([255u8, 255u8]);
     let color = LumaA([0u8, 255u8]);
@@ -152,7 +157,7 @@ fn main() {
     let mut image = GrayAlphaImage::new(600, 800);
     draw_filled_rect_mut(&mut image, Rect::at(0, 0).of_size(600, 800), background_color);
 
-    let scale = Scale::uniform(38.0);
+    let scale = Scale::uniform(MD);
     let mut response = match reqwest::get("https://blakwkb41l.execute-api.us-east-1.amazonaws.com/dev/summary") {
         Ok(res) => res,
         Err(e) => {
@@ -163,8 +168,8 @@ fn main() {
             let file = File::create(path).unwrap();
 
             let fout = &mut BufWriter::new(file);
-            let encoder = image::png::PNGEncoder::new(fout);
-            let _result = encoder.encode(&image, 600, 800, image::Gray(8));
+            let encoder = image::png::PngEncoder::new(fout);
+            let _result = encoder.encode(&image, 600, 800, ColorType::L8);
 
             return;
         },
@@ -180,14 +185,15 @@ fn main() {
             let file = File::create(path).unwrap();
 
             let fout = &mut BufWriter::new(file);
-            let encoder = image::png::PNGEncoder::new(fout);
-            let _result = encoder.encode(&image, 600, 800, image::Gray(8));
+            let encoder = image::png::PngEncoder::new(fout);
+            let _result = encoder.encode(&image, 600, 800, ColorType::L8);
             return;
         },
     };
 
+
     // Draw date
-    let large_scale = Scale::uniform(60.0);
+    let large_scale = Scale::uniform(LG);
     let date_str = &data.now.format("%b %e").to_string();
     let date_margin = WIDTH - MARGIN - calculate_glyph_width(&font, large_scale, date_str);
     draw_text_mut(&mut image, color, date_margin, MARGIN, large_scale, &font, date_str);
@@ -209,7 +215,7 @@ fn main() {
 
     if let Some(surf) = data.surf {
         if surf.maxRating > 0 {
-            draw.paragraph(&format!("🌊 {}{} {} ft at {} secs.", "▪".repeat(surf.maxRating as usize), "▫".repeat(5 - surf.maxRating as usize), surf.height, surf.period).to_string());
+            draw.paragraph(&format!("🌊 {}{} {} ft at {} secs.", "★".repeat(surf.maxRating as usize), "▫".repeat(5 - surf.maxRating as usize), surf.height, surf.period).to_string());
         }
     }
 
@@ -247,15 +253,15 @@ fn main() {
         image::imageops::overlay(&mut draw.image, &front_img.to_luma_alpha(), (WIDTH + space_between_x) / 2, draw.offset + space_between_y);
     }
 
-    let small_scale = Scale::uniform(15.0);
+    let small_scale = Scale::uniform(SM);
     draw_text_mut(&mut draw.image, color, WIDTH - MARGIN - MARGIN, HEIGHT - MARGIN, small_scale, &font, &data.now.format("%H:%M").to_string());
 
     let path = Path::new("image.png");
     let file = File::create(path).unwrap();
 
     let fout = &mut BufWriter::new(file);
-    let encoder = image::png::PNGEncoder::new(fout);
+    let encoder = image::png::PngEncoder::new(fout);
     //let gray_img = image::DynamicImage::ImageLumaA8(draw.image);
     let grayscale_img = image::imageops::grayscale(&draw.image);
-    let _result = encoder.encode(&grayscale_img, 600, 800, image::Gray(8));
+    let _result = encoder.encode(&grayscale_img, 600, 800, ColorType::L8);
 }

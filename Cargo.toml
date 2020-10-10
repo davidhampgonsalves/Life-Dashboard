@@ -7,10 +7,10 @@ authors = ["David Hamp-Gonsalves <davidhampgonsalves@gmail.com>"]
 openssl-probe = "0.1.2"
 reqwest = "0.8.2"
 chrono = { version = "0.4", features = ["serde"] }
-image = ""
-imageproc = ""
+imageproc = "0.21.0"
 serde = ""
 serde_derive = ""
 serde_json = "1.0"
 rusttype = ""
+image = ""
 rand = "0.6.5"
