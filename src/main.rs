@@ -158,11 +158,13 @@ fn main() {
     draw_filled_rect_mut(&mut image, Rect::at(0, 0).of_size(600, 800), background_color);
 
     let scale = Scale::uniform(MD);
-    let mut response = match reqwest::get("https://blakwkb41l.execute-api.us-east-1.amazonaws.com/dev/summary") {
-        Ok(res) => res,
+    let req = reqwest::blocking::get("https://7msm85g5y8.execute-api.us-east-1.amazonaws.com/dev/summary");
+
+    let response = match req {
+        Ok(data) => data,
         Err(e) => {
             println!("error: {:?}", e);
-            draw_text_mut(&mut image, color, 220, 260, scale, &font, &"Error pulling data.".to_string());
+            draw_text_mut(&mut image, color, 190, 260, scale, &font, &"Error transforming data.".to_string());
 
             let path = Path::new("image.png");
             let file = File::create(path).unwrap();
@@ -170,10 +172,10 @@ fn main() {
             let fout = &mut BufWriter::new(file);
             let encoder = image::png::PngEncoder::new(fout);
             let _result = encoder.encode(&image, 600, 800, ColorType::L8);
-
             return;
         },
     };
+
 
     let data = match response.json::<Data>() {
         Ok(data) => data,

@@ -29,6 +29,7 @@ network settings, find RNDIS, change from DHCP to manual and ip: 192.168.15.201.
 # set ip of computers usb port
 ifconfig # search for device with 192.168.15.201
 sudo ifconfig en5 192.168.15.201
+
 ssh root@192.168.15.244
 /usr/sbin/mntroot rw
 mv /mnt/base-us/pokemon/ /
@@ -39,10 +40,13 @@ Setup Wifi on Kindle and then run `install.sh` with Kindle connected via USB.
 # Cross Compiling to Kindle (ARM-7 Soft Float)
 We need a statically compiled binary to run in the Kindle. There are many ways to do this but on OSX I use docker(via https://github.com/messense/rust-musl-cross) to avoid polluting my system with all the required bits and having to compile each requirement separately.
 ```
-docker pull messense/rust-musl-cross:arm-musleabi
-alias rust-musl-builder='docker run --rm -it -v "$(pwd)":/home/rust/src messense/rust-musl-cross:arm-musleabi'
+docker pull messense/rust-musl-cross:armv7-musleabi && \
+alias rust-musl-builder='docker run --rm -it -v "$(pwd)":/home/rust/src messense/rust-musl-cross:armv7-musleabi ' && \
 rust-musl-builder cargo build --release
 ```
+
+# Cross
+cross build --target armv7-unknown-linux-musleabihf
 
 # Copy books to Kindle vis SCP
 ```

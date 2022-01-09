@@ -10,15 +10,7 @@
     "request": "^2.85.0",
     "request-promise-native": "^1.0.5"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged"
-    }
-  },
   "devDependencies": {
-    "husky": "^1.0.0-rc.1",
-    "prettier": "^1.12.1",
-    "pretty-quick": "^1.4.1",
     "serverless": "^2.7.0",
     "serverless-offline": "^8.3.1"
   }

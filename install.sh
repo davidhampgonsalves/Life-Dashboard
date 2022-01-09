@@ -8,7 +8,7 @@ scp pokemon.zip root@192.168.15.244:/pokemon.zip
 
 ssh root@192.168.15.244 << EOF
   mkdir pokemon
-  unzip pokemon -d pokemon
+  unzip pokemon.zip -d pokemon
   cd /
 	chmod 777 periodic-display.sh
 	chmod 777 main
