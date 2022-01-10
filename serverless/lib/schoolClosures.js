@@ -18,7 +18,7 @@ module.exports.fetchMostRecentEvent = async () => {
     const end = moment.utc().add(1, "days").startOf('day');
 
     return {
-      faIcon: "",
+      icon: "",
       title,
 			start,
 			end,

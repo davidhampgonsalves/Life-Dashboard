@@ -4,7 +4,7 @@ const R = require('ramda');
 const moment = require('moment-timezone');
 const { google } = require('googleapis');
 
-module.exports.fetchCalendarEvents = async (calendarID, icon="") => {
+module.exports.fetchCalendarEvents = async (calendarID) => {
   const client = await google.auth
     .getClient({
       keyFile: 'creds/jwt.keys.json',
@@ -35,7 +35,6 @@ module.exports.fetchCalendarEvents = async (calendarID, icon="") => {
   return R.map(
     e => {
       const json = {
-        faIcon: icon,
         title: e.summary,
         description: e.description,
       };

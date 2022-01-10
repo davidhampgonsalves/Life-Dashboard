@@ -11,14 +11,14 @@ module.exports.fetchMostRecentEvent = async () => {
     const $ = await rp({ uri: "https://www.halifax.ca/transportation/winter-operations/service-updates", headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36' }, transform: cheerio.load });
     const title = $("#tablefield-paragraph-126041-field_table-0").find('.row_1.col_1.c-table__cell').text();
 
-    if(title.match(/not in effect/i))
+    if(title.match(/not be in effect/i))
       return null;
 
     const start = moment.utc().startOf('day');
     const end = moment.utc().add(1, "days").startOf('day');
 
     return {
-      faIcon: "🚗",
+      icon: "🚗",
       title,
 			start,
 			end,

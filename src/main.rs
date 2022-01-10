@@ -30,6 +30,7 @@ use chrono::{DateTime, FixedOffset};
 
 #[derive(Debug, Deserialize)]
 struct Event {
+    icon: Option<String>,
     title: String,
     description: Option<String>,
     start: Option<DateTime<FixedOffset>>,
@@ -207,10 +208,11 @@ fn main() {
 
     if let Some(events) = data.events {
         for event in events {
+            let icon = event.icon.unwrap_or("📅".to_string());
             if let Some(start) = event.start {
-                draw.paragraph(&format!("📅 {} 🕘{} - {}.", &event.title, format(start), format(event.end.unwrap())));
+                draw.paragraph(&format!("{} {} 🕘{} - {}.", &icon, &event.title, format(start), format(event.end.unwrap())));
             } else {
-                draw.paragraph(&format!("📅 {}", &event.title));
+                draw.paragraph(&format!("{} {}", &icon, &event.title));
             }
         }
     }
