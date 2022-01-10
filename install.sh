@@ -7,13 +7,13 @@ scp target/arm-unknown-linux-musleabi/release/life-dashboard root@192.168.15.244
 scp pokemon.zip root@192.168.15.244:/pokemon.zip
 
 ssh root@192.168.15.244 << EOF
-  mkdir pokemon
-  unzip pokemon.zip -d pokemon
-  cd /
-	chmod 777 periodic-display.sh
+	mkdir pokemon
+	unzip pokemon.zip -d pokemon
+	cd /
+	chmod 777 start.sh
 	chmod 777 main
-	shutdown -r now
-	echo "Install complete, unplug Kindle now (or it will mess up the USB connection)."
-EOF
 
-echo "add '*/30 * * * * /periodic-display.sh' to cron file (vi /etc/crontab/root)."
+	echo "Install complete, unplug Kindle now (or it will mess up the USB connection)."
+
+	./start.sh
+EOF
