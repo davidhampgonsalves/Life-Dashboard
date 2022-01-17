@@ -6,6 +6,7 @@ enable_wifi() {
 }
 disable_wifi() { lipc-set-prop com.lab126.cmd wirelessEnable 0; }
 
+RTC=/sys/devices/platform/mxc_rtc.0/wakeup_enable
 rtc_sleep() {
   duration=$1
   [ "$(cat "$RTC")" -eq 0 ] && echo -n "$duration" >"$RTC"
@@ -17,7 +18,6 @@ cd /
 
 echo "setting up low power usage"
 /etc/init.d/framework stop
-initctl stop webreader >/dev/null 2>&1
 echo powersave >/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 lipc-set-prop com.lab126.powerd preventScreenSaver 1
 
@@ -25,7 +25,18 @@ while true; do
   echo "enabling wifi"
   enable_wifi
   echo "running main"
-  ./main
+  
+  if ./main ; then
+   echo "image generated" 
+  else
+    # dashboard isn't functioning, try and get back to sane configuration
+    # lipc-set-prop com.lab126.powerd preventScreenSaver 0
+    # echo ondemand >/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    # /etc/init.d/framework start
+    shutdown -r now
+    exit
+  fi
+
   echo "disabling wifi"
   disable_wifi
 

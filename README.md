@@ -57,7 +57,5 @@ dbus-send --system /default com.lab126.powerd.resuming int32:1
 ## Notes
 The [mobileread forumn](https://www.mobileread.com/forums/) is the place for mobile reader hacking.
 
-My Kindle (KT 4) does not provide access to the RTC,  but if I ever find a Kindle Paper White I would be able to sleep the device and run it unplugged for months between changes.
-
 I could have avoided the backend of this project and only used the Kindle but I had already created it for another project and saved time to reuse it.
 

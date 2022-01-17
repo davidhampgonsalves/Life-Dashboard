@@ -1,0 +1,16 @@
+#! /bin/sh
+
+case "$1" in
+  start)
+    /start.sh &
+    ;;
+  stop)
+    echo "I can't let you do that (just restart)."
+    ;;
+  *)
+    echo "Usage: /etc/init.d/life-dashboard-init
+{start|stop}"
+    exit 1
+    ;;
+esac
+exit 0
