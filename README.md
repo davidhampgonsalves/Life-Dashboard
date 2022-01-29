@@ -1,4 +1,3 @@
-
 # Life Dashboard
 Low power, heads up display for every day life running on a Kindle.
 
@@ -35,24 +34,30 @@ ssh root@192.168.15.244
 mv /mnt/base-us/pokemon/ /
 ```
 ## Install
-Setup Wifi on Kindle and then run `install.sh` with Kindle connected via USB.
+Setup Wifi on Kindle and then run `install.sh` with Kindle connected via USB or wifi.
 
 # Cross Compiling to Kindle (ARM-7 Soft Float)
 We need a statically compiled binary to run in the Kindle. There are many ways to do this but on OSX I use docker(via https://github.com/messense/rust-musl-cross) to avoid polluting my system with all the required bits and having to compile each requirement separately.
 ```
 docker pull messense/rust-musl-cross:armv7-musleabi && \
-alias rust-musl-builder='docker run --rm -it -v "$(pwd)":/home/rust/src messense/rust-musl-cross:armv7-musleabi ' && \
+alias rust-musl-builder='docker run --rm -it -v "$(pwd)":/home/rust/src messense/rust-musl-cross:armv7-musleabi'
 rust-musl-builder cargo build --release
 ```
 
 # Cross
+Cross doesn't support soft float for arm 7 yet.
+```
 cross build --target armv7-unknown-linux-musleabihf
+```
 
 # Copy books to Kindle vis SCP
 ```
 scp book.mobi root@192.168.15.244:/mnt/base-us/documents/
 dbus-send --system /default com.lab126.powerd.resuming int32:1
 ```
+
+# Frame
+3D printed using wood filled filliment - https://www.thingiverse.com/thing:2536906
 
 ## Notes
 The [mobileread forumn](https://www.mobileread.com/forums/) is the place for mobile reader hacking.

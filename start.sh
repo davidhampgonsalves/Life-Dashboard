@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# RUn via /etc/init.d/life-dashboard-init start
+
 enable_wifi() {
   lipc-set-prop com.lab126.cmd wirelessEnable 1
   while ! lipc-get-prop com.lab126.wifid cmState | grep -q CONNECTED; do sleep 1; done
@@ -14,7 +16,7 @@ echo "setting up low power usage"
 echo powersave >/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 lipc-set-prop com.lab126.powerd preventScreenSaver 1
 
-eip -c 12 19 "Starting polling / sleep" && eips 15 20 "cycle in 30 seconds."
+eips -c 12 19 "Starting polling / sleep" && eips 15 20 "cycle in 30 seconds."
 sleep 30
 
 while true; do
@@ -37,10 +39,9 @@ while true; do
   eips -f -g /image.png
 
   sleep 1
+  echo "drawing battery level"
   batteryLevel=$(lipc-get-prop com.lab126.powerd battLevel)
-  if [ $batteryLevel -le 10 ]; then
-    eips 46 38 "$batteryLevel"
-  fi
+  eips 46 38 "$batteryLevel"
 
   echo "entering rtc sleep"
   sleep 5
