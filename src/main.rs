@@ -140,7 +140,7 @@ const LG:f32 = 50.0;
 impl ParagraghDrawer for Draw {
     fn paragraph(&mut self, text: &str) {
         let scale = Scale::uniform(MD);
-        let font = Font::try_from_bytes(include_bytes!("../fonts/Symbola-AjYx.ttf") as &[u8]).expect("Error constructing Font");
+        let font = Font::try_from_bytes(include_bytes!("../fonts/atkinson+symbola.ttf") as &[u8]).expect("Error constructing Font");
         let color = LumaA([0u8, 100]);
 
         self.offset += draw_text_block(&mut self.image, color, &font, scale, text, WIDTH - (2 * MARGIN), MARGIN, self.offset) + PARAGRAPH_PADDING;
@@ -150,7 +150,7 @@ impl ParagraghDrawer for Draw {
 fn main() {
     openssl_probe::init_ssl_cert_env_vars();
 
-    let font = Font::try_from_bytes(include_bytes!("../fonts/Symbola-AjYx.ttf") as &[u8]).expect("Error constructing Font");
+    let font = Font::try_from_bytes(include_bytes!("../fonts/atkinson+symbola.ttf") as &[u8]).expect("Error constructing Font");
 
     let background_color = LumaA([255u8, 255u8]);
     let color = LumaA([0u8, 255u8]);
@@ -219,7 +219,7 @@ fn main() {
 
     if let Some(surf) = data.surf {
         if surf.maxRating > 0 {
-            draw.paragraph(&format!("🌊 {}{} {} ft at {} secs.", "★".repeat(surf.maxRating as usize), "▫".repeat(5 - surf.maxRating as usize), surf.height, surf.period).to_string());
+            draw.paragraph(&format!("🌊 {}{} {} ft @ {} secs.", "★".repeat(surf.maxRating as usize), "▫".repeat(5 - surf.maxRating as usize), surf.height, surf.period).to_string());
         }
     }
 
@@ -234,7 +234,7 @@ fn main() {
     }
 
     if let Some(weather) = data.weather {
-        draw.paragraph(&format!("{} {} - {}°C. {}", &weather.emoji, weather.temperatureLow, weather.temperatureHigh, weather.description));
+        draw.paragraph(&format!("{} < {}°C. {}", weather.temperatureLow, weather.temperatureHigh, weather.description));
     }
 
     // pokemon space filler
