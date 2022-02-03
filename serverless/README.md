@@ -1,4 +1,4 @@
 ```
 yarn sls offline start
-yarn sls deploy -v
+yarn sls deploy --verborse --aws-profile personal
 ```

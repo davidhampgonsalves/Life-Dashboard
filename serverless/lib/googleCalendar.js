@@ -10,9 +10,7 @@ module.exports.fetchCalendarEvents = async (calendarID) => {
       keyFile: 'creds/jwt.keys.json',
       scopes: 'https://www.googleapis.com/auth/calendar.readonly',
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(console.error);
 
   const calendar = google.calendar({ version: 'v3', auth: client });
 
@@ -28,9 +26,7 @@ module.exports.fetchCalendarEvents = async (calendarID) => {
       singleEvents: true,
       orderBy: 'startTime',
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(console.error);
 
   return R.map(
     e => {
