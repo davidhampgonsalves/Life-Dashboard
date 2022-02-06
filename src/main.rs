@@ -208,7 +208,8 @@ fn main() {
 
     if let Some(events) = data.events {
         for event in events {
-            let icon = event.icon.unwrap_or("📅".to_string());
+            let icon = event.icon.unwrap_or("📅".to_string()).chars().next().unwrap();
+
             if let Some(start) = event.start {
                 draw.paragraph(&format!("{} {} 🕘{} - {}.", &icon, &event.title, format(start), format(event.end.unwrap())));
             } else {
@@ -234,7 +235,7 @@ fn main() {
     }
 
     if let Some(weather) = data.weather {
-        draw.paragraph(&format!("{} < {}°C. {}", weather.temperatureLow, weather.temperatureHigh, weather.description));
+        draw.paragraph(&format!("{} {} < {}°C. {}", weather.emoji.chars().next().unwrap(), weather.temperatureLow, weather.temperatureHigh, weather.description));
     }
 
     // pokemon space filler

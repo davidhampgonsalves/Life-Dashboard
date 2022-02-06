@@ -6,7 +6,7 @@ Low power, heads up display for every day life running on a Kindle.
 # Details
 Second hand Kindles are waiting in drawers for someone to repurpose them into something great. Boasting large e-ink screens, wifi connectivity and ARM processors they are an amazing hacking platform.
 
-In my case I created an information panel summarizing my day such as my calendar, surf and weather forecast, garbage schedule, school closures, etc. My favorite part is that any extra space is filled with a random Pokémon sprite which my _kids_(not me) like to come check in on.
+In my case I created an information panel summarizing my day such as my calendar, surf and weather forecast, garbage schedule, school closures, etc. The extra space is filled by a random pokemon sprite.
 
 The project uses a serverless backend to collate data from external services and on the Kindle itself [Rust](https://www.rust-lang.org/) code (cross compiled via docker) fetches and typesets the data into an image.
 
@@ -21,6 +21,9 @@ transfer `pokemon` folder to Kindle mounted as USB drive.
 
 ## Jailbreak and Setup SSH
 See (https://wiki.mobileread.com/wiki/Kindle4NTHacking) and if bricked then use Kubrick in VM to restore.
+
+## SSH over wifi
+Hold power button till light flashes, then press power button a few times to restart back to normal e-reader mode. SSH server will be running and wifi will auto connect.
 
 ## SSH Over USB
 network settings, find RNDIS, change from DHCP to manual and ip: 192.168.15.201.
