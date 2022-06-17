@@ -36,7 +36,6 @@ module.exports.fetchCalendarEvents = async (calendarID) => {
     if (e.visibility === "private")
       json = { title: "Work 📎", description: "" };
 
-    console.log(e.visibility);
     if (R.has("dateTime", e.start)) {
       json.start = moment(e.start.dateTime).utc();
       json.end = moment(e.end.dateTime).utc();

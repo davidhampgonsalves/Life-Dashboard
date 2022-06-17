@@ -19,7 +19,7 @@ service: family-dashboard
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   lambdaHashingVersion: 20200924
 
 # you can overwrite defaults here
