@@ -15,6 +15,9 @@ const plaid = require("./lib/plaid");
 module.exports.hello = async (event, context, callback) => {
   let events = await Promise.all([
     google.fetchCalendarEvents("davidhampgonsalves@gmail.com"),
+    google.fetchCalendarEvents(
+      "ms7011nsnge4elr2cgvrmhap6g@group.calendar.google.com"
+    ),
     google.fetchCalendarEvents("david@opencounter.com"),
     ical.fetchCalendarEvents(
       "https://recollect.a.ssl.fastly.net/api/places/D23C8C62-A1B4-11E6-8E02-82F09D80A4F0/services/330/events.en.ics"
@@ -22,7 +25,6 @@ module.exports.hello = async (event, context, callback) => {
     schoolClosures.fetchMostRecentEvent(),
     parkingBan.fetchMostRecentEvent(),
     //mobileFoodMarket.fetchMostRecentEvent(),
-    //google.fetchcalendarevents('ashleyhampgonsalves@gmail.com'),
     //https://clients6.google.com/calendar/v3/calendars/4uujqch2jcd6u4o9s299ma11uc@group.calendar.google.com/events?calendarid=4uujqch2jcd6u4o9s299ma11uc%40group.calendar.google.com&singleevents=true&timezone=america%2fhalifax&maxattendees=1&maxresults=250&sanitizehtml=true&timemin=2019-12-02t00%3a00%3a00-04%3a00&timemax=2019-12-31t00%3a00%3a00-04%3a00&key=aizasybnlyh01_9hc5s1j9vufmu2nuqbzjnaxxs
   ]);
 
