@@ -1,6 +1,5 @@
 #!/bin/sh
-
-# RUn via /etc/init.d/life-dashboard-init start
+# Run via /etc/init.d/life-dashboard-init start
 
 enable_wifi() {
   lipc-set-prop com.lab126.cmd wirelessEnable 1
@@ -38,13 +37,17 @@ while true; do
   echo "drawing image"
   eips -f -g /image.png
 
-  sleep 1
-  echo "drawing battery level"
-  batteryLevel=$(lipc-get-prop com.lab126.powerd battLevel)
-  eips 46 38 "$batteryLevel"
-
+  echo "writing stats"
+  let max_sleep=24*60*60
+  let next_refresh=$((`date +%s` % 86400 - (4*60*60) )) # seconds till midnight
+  if [ $next_refresh -le 0 ] || [ $next_refresh -ge $max_sleep ]; then next_refresh=$max_sleep; fi
+  battery_level=$(lipc-get-prop com.lab126.powerd battLevel)
+  let next_refresh_minutes=$next_refresh/60
+  eips 2 37 "m.$next_refresh_minutes b.$battery_level"
+  eips 2 38 "$(TZ=UTC+4 date -R "+%a %l:%M")"
+  
   echo "entering rtc sleep"
   sleep 5
-  echo 86400 > /sys/devices/platform/mxc_rtc.0/wakeup_enable
+  echo $next_refresh > /sys/devices/platform/mxc_rtc.0/wakeup_enable
   echo "mem" > /sys/power/state
 done

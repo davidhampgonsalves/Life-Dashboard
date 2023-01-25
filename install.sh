@@ -14,5 +14,5 @@ ssh root@192.168.2.12 << EOF
 	chmod 777 main
 	chmod 777 /etc/init.d/life-dashboard-init
 
-	echo "Install complete, start script with: `/etc/init.d/life-dashboard-init start`."
+	echo "Install complete, start script with: `/etc/init.d/life-dashboard-init start` and let it run till the ssh session hangs"
 EOF
