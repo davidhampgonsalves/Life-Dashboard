@@ -147,7 +147,8 @@ impl ParagraghDrawer for Draw {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     openssl_probe::init_ssl_cert_env_vars();
 
     let font = Font::try_from_bytes(include_bytes!("../fonts/atkinson+symbola.ttf") as &[u8]).expect("Error constructing Font");
@@ -159,114 +160,88 @@ fn main() {
     draw_filled_rect_mut(&mut image, Rect::at(0, 0).of_size(600, 800), background_color);
 
     let scale = Scale::uniform(MD);
-    let req = reqwest::blocking::get("https://7msm85g5y8.execute-api.us-east-1.amazonaws.com/dev/summary");
+    let client = reqwest::Client::builder().build()?;
+    let res = client.get("https://7msm85g5y8.execute-api.us-east-1.amazonaws.com/dev/summary").send().await?;
+        // let response = reqwest::get("https://7msm85g5y8.execute-api.us-east-1.amazonaws.com/dev/summary").await;
 
-    let response = match req {
-        Ok(data) => data,
-        Err(e) => {
-            println!("error: {:?}", e);
-            draw_text_mut(&mut image, color, 190, 260, scale, &font, &"Error transforming data.".to_string());
-
-            let path = Path::new("image.png");
-            let file = File::create(path).unwrap();
-
-            let fout = &mut BufWriter::new(file);
-            let encoder = image::png::PngEncoder::new(fout);
-            let _result = encoder.encode(&image, 600, 800, ColorType::L8);
-            return;
-        },
-    };
+    println!("Status: {:#?}", res.json::<Data>().await?);
+    // let data = res.json::<Data>().await?;
 
 
-    let data = match response.json::<Data>() {
-        Ok(data) => data,
-        Err(e) => {
-            println!("error: {:?}", e);
-            draw_text_mut(&mut image, color, 190, 260, scale, &font, &"Error transforming data.".to_string());
+    // // Draw date
+    // let large_scale = Scale::uniform(LG);
+    // let date_str = &data.now.format("%b %e").to_string();
+    // let date_margin = WIDTH - MARGIN - calculate_glyph_width(&font, large_scale, date_str);
+    // draw_text_mut(&mut image, color, date_margin, MARGIN, large_scale, &font, date_str);
 
-            let path = Path::new("image.png");
-            let file = File::create(path).unwrap();
+    // let mut draw = Draw {
+    //     offset: 100,
+    //     image: image,
+    // };
 
-            let fout = &mut BufWriter::new(file);
-            let encoder = image::png::PngEncoder::new(fout);
-            let _result = encoder.encode(&image, 600, 800, ColorType::L8);
-            return;
-        },
-    };
+    // if let Some(events) = data.events {
+    //     for event in events {
+    //         let icon = event.icon.unwrap_or("📅".to_string()).chars().next().unwrap();
 
+    //         if let Some(start) = event.start {
+    //             draw.paragraph(&format!("{} {} 🕘{} - {}.", &icon, &event.title, format(start), format(event.end.unwrap())));
+    //         } else {
+    //             draw.paragraph(&format!("{} {}", &icon, &event.title));
+    //         }
+    //     }
+    // }
 
-    // Draw date
-    let large_scale = Scale::uniform(LG);
-    let date_str = &data.now.format("%b %e").to_string();
-    let date_margin = WIDTH - MARGIN - calculate_glyph_width(&font, large_scale, date_str);
-    draw_text_mut(&mut image, color, date_margin, MARGIN, large_scale, &font, date_str);
+    // if let Some(surf) = data.surf {
+    //     if surf.maxRating > 0 {
+    //         draw.paragraph(&format!("🌊 {}{} {} ft @ {} secs.", "★".repeat(surf.maxRating as usize), "▫".repeat(5 - surf.maxRating as usize), surf.height, surf.period).to_string());
+    //     }
+    // }
 
-    let mut draw = Draw {
-        offset: 100,
-        image: image,
-    };
+    // if let Some(finance) = data.finance {
+    //     if finance.todayTotalDebits + finance.yesterdayTotalDebits == 0 as f32 {
+    //         draw.paragraph(&format!("💲 👏 Zero spent recently. 👏"));
+    //     } else if finance.todayTotalDebits > 0 as f32 {
+    //         draw.paragraph(&format!("💲 {} today, {} yesterday. 🏭", finance.todayTotalDebits, finance.yesterdayTotalDebits));
+    //     } else {
+    //         draw.paragraph(&format!("💲 {} yesterday. 🏭", finance.yesterdayTotalDebits));
+    //     }
+    // }
 
-    if let Some(events) = data.events {
-        for event in events {
-            let icon = event.icon.unwrap_or("📅".to_string()).chars().next().unwrap();
+    // if let Some(weather) = data.weather {
+    //     draw.paragraph(&format!("{} {} < {}°C. {}", weather.emoji.chars().next().unwrap(), weather.temperatureLow, weather.temperatureHigh, weather.description));
+    // }
 
-            if let Some(start) = event.start {
-                draw.paragraph(&format!("{} {} 🕘{} - {}.", &icon, &event.title, format(start), format(event.end.unwrap())));
-            } else {
-                draw.paragraph(&format!("{} {}", &icon, &event.title));
-            }
-        }
-    }
+    // // pokemon space filler
+    // let remaining_height = HEIGHT - draw.offset - (2 * MARGIN);
+    // let max_width = (WIDTH / 2) - (2 * MARGIN);
+    // if remaining_height > 100 {
+    //     let paths: Vec<_> = fs::read_dir(&Path::new("pokemon/front/")).unwrap().map(|maybe_path| maybe_path.unwrap().path()).collect();
+    //     let path = paths.choose(&mut rand::thread_rng()).unwrap();
+    //     let file_name = path.to_str().unwrap().replace("pokemon/front/", "");
 
-    if let Some(surf) = data.surf {
-        if surf.maxRating > 0 {
-            draw.paragraph(&format!("🌊 {}{} {} ft @ {} secs.", "★".repeat(surf.maxRating as usize), "▫".repeat(5 - surf.maxRating as usize), surf.height, surf.period).to_string());
-        }
-    }
+    //     let mut front_img = image::open(&Path::new(&format!("pokemon/front/{}", file_name))).ok().expect("Opening front image failed");
+    //     let mut back_img = image::open(&Path::new(&format!("pokemon/back/{}", file_name))).ok().expect("Opening back image failed");
 
-    if let Some(finance) = data.finance {
-        if finance.todayTotalDebits + finance.yesterdayTotalDebits == 0 as f32 {
-            draw.paragraph(&format!("💲 👏 Zero spent recently. 👏"));
-        } else if finance.todayTotalDebits > 0 as f32 {
-            draw.paragraph(&format!("💲 {} today, {} yesterday. 🏭", finance.todayTotalDebits, finance.yesterdayTotalDebits));
-        } else {
-            draw.paragraph(&format!("💲 {} yesterday. 🏭", finance.yesterdayTotalDebits));
-        }
-    }
+    //     front_img = front_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
+    //     back_img = back_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
 
-    if let Some(weather) = data.weather {
-        draw.paragraph(&format!("{} {} < {}°C. {}", weather.emoji.chars().next().unwrap(), weather.temperatureLow, weather.temperatureHigh, weather.description));
-    }
+    //     let space_between_x = (WIDTH - front_img.width() - back_img.width()) / 3;
+    //     let space_between_y = (remaining_height - front_img.height()) / 2;
+    //     image::imageops::overlay(&mut draw.image, &back_img.to_luma_alpha(), space_between_x, draw.offset + space_between_y);
+    //     image::imageops::overlay(&mut draw.image, &front_img.to_luma_alpha(), (WIDTH + space_between_x) / 2, draw.offset + space_between_y);
+    // }
 
-    // pokemon space filler
-    let remaining_height = HEIGHT - draw.offset - (2 * MARGIN);
-    let max_width = (WIDTH / 2) - (2 * MARGIN);
-    if remaining_height > 100 {
-        let paths: Vec<_> = fs::read_dir(&Path::new("pokemon/front/")).unwrap().map(|maybe_path| maybe_path.unwrap().path()).collect();
-        let path = paths.choose(&mut rand::thread_rng()).unwrap();
-        let file_name = path.to_str().unwrap().replace("pokemon/front/", "");
+    // let small_scale = Scale::uniform(SM);
+    // draw_text_mut(&mut draw.image, color, WIDTH - MARGIN - MARGIN, HEIGHT - MARGIN, small_scale, &font, &data.now.format("%H:%M").to_string());
 
-        let mut front_img = image::open(&Path::new(&format!("pokemon/front/{}", file_name))).ok().expect("Opening front image failed");
-        let mut back_img = image::open(&Path::new(&format!("pokemon/back/{}", file_name))).ok().expect("Opening back image failed");
+    // let path = Path::new("image.png");
+    // let file = File::create(path).unwrap();
 
-        front_img = front_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
-        back_img = back_img.resize(max_width, remaining_height, image::imageops::FilterType::Nearest);
+    // let fout = &mut BufWriter::new(file);
+    // let encoder = image::png::PngEncoder::new(fout);
+    // //let gray_img = image::DynamicImage::ImageLumaA8(draw.image);
+    // let grayscale_img = image::imageops::grayscale(&draw.image);
+    // let _result = encoder.encode(&grayscale_img, 600, 800, ColorType::L8);
 
-        let space_between_x = (WIDTH - front_img.width() - back_img.width()) / 3;
-        let space_between_y = (remaining_height - front_img.height()) / 2;
-        image::imageops::overlay(&mut draw.image, &back_img.to_luma_alpha(), space_between_x, draw.offset + space_between_y);
-        image::imageops::overlay(&mut draw.image, &front_img.to_luma_alpha(), (WIDTH + space_between_x) / 2, draw.offset + space_between_y);
-    }
-
-    let small_scale = Scale::uniform(SM);
-    draw_text_mut(&mut draw.image, color, WIDTH - MARGIN - MARGIN, HEIGHT - MARGIN, small_scale, &font, &data.now.format("%H:%M").to_string());
-
-    let path = Path::new("image.png");
-    let file = File::create(path).unwrap();
-
-    let fout = &mut BufWriter::new(file);
-    let encoder = image::png::PngEncoder::new(fout);
-    //let gray_img = image::DynamicImage::ImageLumaA8(draw.image);
-    let grayscale_img = image::imageops::grayscale(&draw.image);
-    let _result = encoder.encode(&grayscale_img, 600, 800, ColorType::L8);
+    Ok(())
 }

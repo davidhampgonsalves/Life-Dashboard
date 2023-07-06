@@ -56,7 +56,7 @@ module.exports.hello = async (event, context, callback) => {
 
   const [weather, surf, finance] = await Promise.all([
     forecastIO.fetchForecast(),
-    magicseaweed.fetchForecast(),
+    /// magicseaweed.fetchForecast(),
     // plaid.fetchFinance(),
   ]);
 

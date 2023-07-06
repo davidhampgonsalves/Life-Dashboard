@@ -1,15 +1,15 @@
 #!/bin/sh
-ssh root@192.168.2.12 "/usr/sbin/mntroot rw"
+ssh root@192.168.5.11 "/usr/sbin/mntroot rw"
 
-scp start.sh root@192.168.2.12:/start.sh
-scp target/armv7-unknown-linux-musleabi/release/life-dashboard root@192.168.2.12:/main
-scp life-dashboard-init root@192.168.2.12:/etc/init.d/life-dashboard-init
-scp pokemon.zip root@192.168.2.12:/pokemon.zip
+scp start.sh root@192.168.5.11:/start.sh
+scp target/armv7-unknown-linux-musleabi/release/life-dashboard root@192.168.5.11:/main
+scp life-dashboard-init root@192.168.5.11:/etc/init.d/life-dashboard-init
+scp pokemon.zip root@192.168.5.11:/pokemon.zip
 
-ssh root@192.168.2.12 << EOF
+ssh root@192.168.5.11 << EOF
+	cd /
 	mkdir pokemon
 	unzip pokemon.zip -d pokemon
-	cd /
 	chmod 777 start.sh
 	chmod 777 main
 	chmod 777 /etc/init.d/life-dashboard-init
