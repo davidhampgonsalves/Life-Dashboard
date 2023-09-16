@@ -7,10 +7,7 @@ const google = require("./lib/googleCalendar");
 const ical = require("./lib/ical");
 const forecastIO = require("./lib/forecastIO");
 const magicseaweed = require("./lib/magicseaweed");
-const mobileFoodMarket = require("./lib/mobileFoodMarket");
 const schoolClosures = require("./lib/schoolClosures");
-const parkingBan = require("./lib/parkingBan");
-const plaid = require("./lib/plaid");
 
 module.exports.hello = async (event, context, callback) => {
   let events = await Promise.all(
@@ -23,8 +20,6 @@ module.exports.hello = async (event, context, callback) => {
         "https://recollect.a.ssl.fastly.net/api/places/D23C8C62-A1B4-11E6-8E02-82F09D80A4F0/services/330/events.en.ics"
       ),
       schoolClosures.fetchMostRecentEvent(),
-      parkingBan.fetchMostRecentEvent(),
-      //mobileFoodMarket.fetchMostRecentEvent(),
     ].map((p) =>
       p.catch((e) => {
         console.error(e.message);
@@ -54,14 +49,12 @@ module.exports.hello = async (event, context, callback) => {
     })
   )(events);
 
-  const [weather, surf, finance] = await Promise.all([
+  const [weather, surf] = await Promise.all([
     forecastIO.fetchForecast(),
-    /// magicseaweed.fetchForecast(),
-    // plaid.fetchFinance(),
+    magicseaweed.fetchForecast(),
   ]);
 
   const json = R.filter((v) => !R.isNil(v) && !R.isEmpty(v), {
-    finance,
     events,
     weather,
     surf,

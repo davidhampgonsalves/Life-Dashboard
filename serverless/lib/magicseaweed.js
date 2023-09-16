@@ -1,39 +1,23 @@
 "use strict";
 
-const R = require("ramda");
 const rp = require("request-promise-native");
-const fs = require("fs");
-const moment = require("moment-timezone");
-
-const filterByToday = R.filter((f) => {
-  const timestamp = moment.unix(f.timestamp).tz("America/Halifax");
-  return timestamp.isSame(moment().tz("America/Halifax"), "day");
-});
-
-const filterByTomorrow = R.filter((f) => {
-  const timestamp = moment.unix(f.timestamp).tz("America/Halifax");
-  return timestamp.isSame(moment().add(1, "days").tz("America/Halifax"), "day");
-});
+const cheerio = require("cheerio");
 
 module.exports.fetchForecast = async () => {
   try {
-    const key = R.trim(fs.readFileSync("creds/magicseaweed.txt", "utf8"));
+    const $ = await rp({
+      uri: "https://www.ndbc.noaa.gov/station_page.php?station=44258",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 5.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36",
+      },
+      transform: cheerio.load,
+    });
 
-    const forecasts = await Promise.all([
-      rp({ uri: `http://magicseaweed.com/api/${key}/forecast/?spot_id=787` }),
-      rp({ uri: `http://magicseaweed.com/api/${key}/forecast/?spot_id=787` }),
-    ]);
-
-    return R.pipe(R.map(JSON.parse), R.flatten, filterByTomorrow, (f) => ({
-      maxRating: Math.max(...R.pluck("solidRating", f)),
-      fadedRating: Math.max(...R.pluck("fadedRating", f)),
-      height: R.max(
-        ...R.map(R.path(["swell", "components", "combined", "height"]), f)
-      ),
-      period: R.max(
-        ...R.map(R.path(["swell", "components", "combined", "period"]), f)
-      ),
-    }))(forecasts);
+    return {
+      height: $($(".currentobs td")[8]).text(),
+      period: $($(".currentobs td")[10]).text(),
+    };
   } catch (e) {
     console.error(e);
     return {};
