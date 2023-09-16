@@ -1,38 +1,38 @@
 "use strict";
 
-const R = require("ramda");
 const rp = require("request-promise-native");
-const fs = require("fs");
+const cheerio = require("cheerio");
 
-const emojiToUnicode = {
-  "clear-day": "☀️",
-  "clear-night": "🌙",
-  rain: "🌂",
-  snow: "❄️",
-  sleet: "❄️",
-  fog: "🌫",
-  wind: "🎏",
-  cloudy: "☁",
-  "partly-cloudy-day": "⛅",
-  "partly-cloudy-night": "⛅",
-};
+function observationToUnicode(observationType) {
+  const ot = observationType.toLowerCase();
+  if (ot.match(/snow|freezing|ice|squalls/)) return "❄️";
+  if (ot.match(/rain|mist|precipitation|drizzle|thunder/)) return "🌂";
+  if (ot.match(/fog|haze/)) return "🌫";
+  if (ot.match(/clear/)) return "☀️";
+  if (ot.match(/partly cloud/)) return "⛅";
+  if (ot.match(/cloud/)) return "☁";
+  return "🦞";
+}
 module.exports.fetchForecast = async () => {
   try {
-    const key = fs.readFileSync("creds/forecast.io.txt", "utf8");
-
-    const body = await rp({
-      uri: `https://api.pirateweather.net/forecast/${R.trim(
-        key
-      )}/44.652,-63.601?units=auto&exclude=currently,minutely,alerts,flags`,
+    const $ = await rp({
+      uri: "https://weather.gc.ca/city/pages/ns-19_metric_e.html",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 5.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36",
+      },
+      transform: cheerio.load,
     });
-    const w = JSON.parse(body);
+    const observationType = $("img[data-v-33b01f9c]").first().attr("alt");
+    console.log(observationType, observationToUnicode(observationType));
+    let description = $(".pdg-tp-0").first().children("td").last().text();
+    description = description.split(".").slice(0, 2).join(".");
 
     return {
-      emoji: emojiToUnicode[w.hourly.icon],
-      temperatureHigh: Math.round(w.daily.data[0].temperatureHigh),
-      temperatureLow: Math.round(w.daily.data[0].temperatureLow),
-      description: w.hourly.summary,
-      weekDescription: w.daily.summary,
+      emoji: observationToUnicode(observationType),
+      description,
+      temperatureHigh: $(".mrgn-lft-sm[title=High]").first().text(),
+      temperatureLow: $(".mrgn-lft-sm[title=Low]").first().text(),
     };
   } catch (e) {
     console.error(e);
