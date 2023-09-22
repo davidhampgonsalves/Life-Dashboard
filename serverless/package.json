@@ -4,7 +4,7 @@
     "googleapis": "^103.0.0",
     "ical": "^0.8.0",
     "moment": "^2.29.3",
-    "moment-timezone": "^0.5.34",
+    "moment-timezone": "^0.5.35",
     "plaid": "^10.6.0",
     "ramda": "^0.28.0",
     "request": "^2.88.2",
