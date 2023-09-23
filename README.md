@@ -1,23 +1,29 @@
+<img style="width:400px" align="right" src="https://github.com/davidhampgonsalves/life-dashboard/raw/master/example.jpg"/>
+
 # Life Dashboard
 Low power, heads up display for every day life running on a Kindle.
 
-<img align="right" src="https://github.com/davidhampgonsalves/life-dashboard/raw/master/life-dashboard.jpg"/>
-
-# Details
+## Details
 Second hand Kindles are waiting in drawers for someone to repurpose them into something great. Boasting large e-ink screens, wifi connectivity and ARM processors they are an amazing hacking platform.
 
-In my case I created an information panel summarizing my day such as my calendar, surf and weather forecast, garbage schedule, school closures, etc. The extra space is filled by a random pokemon sprite.
+(This is the second version of this project, see the post about the original [here](https://www.davidhampgonsalves.com/life-dashboard/))
 
-The project uses a serverless backend to collate data from external services and on the Kindle itself [Rust](https://www.rust-lang.org/) code (cross compiled via docker) fetches and typesets the data into an image.
+## V2 Rewrite and Compromises
+Ideally this dashboard would generate and display its image on its own. The issue with doing this originally was that the Kindles ability to display images (via eips) requires they be in a strange format. A few yars back when I started this it was hard to get GoLang to generate this format but it was easy to cross compile GoLang to the target ARM-7 softfloat arch. On the other hand Rust could generate the image but it was a pain to setup the cross compiler toolchain (also connecting to Google API's wasn't well supported). 
 
-I built a stand rather then a more standard frame because the e-reader functionality of the Kindle is still present and can be used without modification. I also thought it was important to avoid obscuring the original device and celebrate its reuse.
+In the 5 years that followed the dashboard was a great tool but as API services would die (Magicseaweed, Forecast.io, DarkSky, etc) it would break. Sometimes that would require changes to the Rust front end and I would have to setup the cross compiling toolchain on each new machine I was using and eventually this got annoying.
 
-More details can be found on my [blog](https://www.davidhampgonsalves.com/life-dashboard/).
+I found out about [FBInk](https://github.com/NiLuJe/FBInk) which has Go bindings and decided that using that I could use it to do text layout and print the resulting PNG's to the screen. Unfortunately I found that GoLangs OpenFont lib crashes when run on the kindle and that these old arm archetectures aren't well supported. This seemed like an unstable footing to build on. 
+
+This led me to my current compromise. I use FBInk on the kindle to display the images after curling them from a API Gateway/Lambda backend. This gives me a low friction way to update the API logic without needing to touch the kindle or cross compile anything. I also was able to use GoLangs [tdewolff/canvas](https://github.com/tdewolff/canvas/) which provides nice text setting and image generation tooling. I think is the right balance to keep this device productive for another 5+ years.
+
+# Deploy (via Terraform)
+`./deploy.sh`
+
+# Run Locally
+`go test -c -o ldb.test ./pkg/ && ./ldb.test && open ldb.test.png`
 
 # Setup
-
-## USB
-transfer `pokemon` folder to Kindle mounted as USB drive.
 
 ## Jailbreak and Setup SSH
 See (https://wiki.mobileread.com/wiki/Kindle4NTHacking) and if bricked then use Kubrick in VM to restore.
@@ -25,33 +31,9 @@ See (https://wiki.mobileread.com/wiki/Kindle4NTHacking) and if bricked then use 
 ## SSH over wifi
 Hold power button till light flashes, then press power button a few times to restart back to normal e-reader mode. SSH server will be running and wifi will auto connect.
 
-## SSH Over USB
-network settings, find RNDIS, change from DHCP to manual and ip: 192.168.15.201.
-```
-# set ip of computers usb port
-ifconfig # search for device with 192.168.15.201
-sudo ifconfig en5 192.168.15.201
-
-ssh root@192.168.15.244
-/usr/sbin/mntroot rw
-mv /mnt/base-us/pokemon/ /
-```
 ## Install
-Setup Wifi on Kindle and then run `install.sh` with Kindle connected via USB or wifi.
-
-# Cross Compiling to Kindle (ARM-7 Soft Float)
-We need a statically compiled binary to run in the Kindle. There are many ways to do this but on OSX I use docker(via https://github.com/messense/rust-musl-cross) to avoid polluting my system with all the required bits and having to compile each requirement separately.
-```
-docker pull messense/rust-musl-cross:armv7-musleabi && \
-alias rust-musl-builder='docker run --rm -it -v "$(pwd)":/home/rust/src messense/rust-musl-cross:armv7-musleabi'
-rust-musl-builder cargo build --release
-```
-
-# Cross
-Cross doesn't support soft float for arm 7 yet.
-```
-cross build --target armv7-unknown-linux-musleabihf
-```
+* Install Fbink.
+* Setup Wifi on Kindle and then run `install.sh`.
 
 # Copy books to Kindle vis SCP
 ```

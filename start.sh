@@ -21,21 +21,18 @@ sleep 30
 while true; do
   echo "enabling wifi"
   enable_wifi
-  echo "running main"
-  
-  if ./main ; then
-   echo "image generated" 
+  echo "requesting image"
+
+  if curl https://iqxi0d5cbl.execute-api.us-east-1.amazonaws.com/v1/lifedashboard > ldb.png ; then
+    echo "image downloaded" 
+    ./fbink/bin/fbink --clear -g file=ldb.png
   else
-    # dashboard isn't functioning, try and get back to a sane configuration
-    shutdown -r now
+    ./fbink/bin/fbink -pmM -y -8 "Endpoint request failed, exiting"
     exit
   fi
 
   echo "disabling wifi"
   disable_wifi
-
-  echo "drawing image"
-  eips -f -g /image.png
 
   echo "writing stats"
   let max_sleep=24*60*60
