@@ -30,5 +30,5 @@ func SunAndMoon() ([]event.Event, error) {
 	m := MoonPhase.New(n)
 
 	phase := int(math.Floor((m.Phase() + 0.0625) * 8))
-	return []event.Event{{Text: fmt.Sprintf("🌞 🔼%s 🔽%s %s", rise.Format(time.Kitchen), set.Format(time.Kitchen), Emojis[phase])}}, nil
+	return []event.Event{{Text: fmt.Sprintf("🌞 🔼%s 🔽%s %s", rise.In(hfx).Format(time.Kitchen), set.In(hfx).Format(time.Kitchen), Emojis[phase])}}, nil
 }
