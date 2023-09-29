@@ -39,7 +39,7 @@ func GoogleCalendar(calendarName string) func() ([]event.Event, error) {
 				}
 				span = startTime.Format(time.Kitchen) + " "
 			}
-			events = append(events, event.Event{Text: fmt.Sprintf("🗓️%s%s", span, item.Summary)})
+			events = append(events, event.Event{Text: fmt.Sprintf("🗓️ %s%s", span, item.Summary)})
 		}
 
 		return events, nil
