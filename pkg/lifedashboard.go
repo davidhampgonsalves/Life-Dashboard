@@ -14,12 +14,11 @@ import (
 func Generate() []byte {
 	fetchers := []func() ([]event.Event, error){
 		fetchers.Weather,
-		fetchers.Surf,
-		fetchers.SchoolClosures,
-		fetchers.Surfline,
-		fetchers.SunAndMoon,
+		// fetchers.SchoolClosures, // they changed the location, check back when canceled
 		fetchers.GoogleCalendar("davidhampgonsalves@gmail.com"),
 		fetchers.GoogleCalendar("ms7011nsnge4elr2cgvrmhap6g@group.calendar.google.com"),
+		fetchers.SurfCaptain,
+		fetchers.SunAndMoon,
 	}
 
 	events := []event.Event{}
