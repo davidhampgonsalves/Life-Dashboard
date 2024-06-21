@@ -4,12 +4,28 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
+	"strconv"
+	"regexp"
+
+	// "strings"
 
 	"davidhampgonsalves/lifedashboard/pkg/event"
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+func parseRange(input string) (int, error) {
+	re := regexp.MustCompile(`^\d+`)
+	match := re.FindString(input)
+	if match == "" {
+			return 0, fmt.Errorf("invalid input: %s", input)
+	}
+	num, err := strconv.Atoi(match)
+	if err != nil {
+			return 0, err
+	}
+	return num, nil
+}
 
 func SurfCaptain() ([]event.Event, error) {
 	resp, err := http.Get("https://surfcaptain.com/forecast/cow-bay-nova-scotia")
@@ -17,24 +33,29 @@ func SurfCaptain() ([]event.Event, error) {
 	if err != nil || resp.StatusCode != 200 {
 		return nil, errors.New("surfcaptain page failed to load")
 	}
-	// bodyBytes, err := io.ReadAll(resp.Body)
-	// fmt.Println("BODY")
-	// fmt.Println(string(bodyBytes))
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 
-	fmt.Println()
-	str := "🏄"
-
-	// , .day-summary-cond
-	doc.Find(".day-summary-surf").Each(func(i int, node *goquery.Selection) {
-		if i > 0 {
-			str += " "
+	str := ""
+	doc.Find(".hourly-surf.clean").Each(func(_i int, node *goquery.Selection) {
+		if str != "" {
+			return
 		}
-		str += strings.TrimSpace(node.Contents().Get(1).Data)
+		size, err := parseRange(node.Contents().Get(0).Data)
+		if err != nil {
+			return 
+		}
+
+		if size > 2 {
+			day := node.ParentsFiltered(".fcst-summary-swell").Find(".summary-date-day").Text()
+			str = fmt.Sprintf("🏄 %d ft on %s", size, day)
+		}
 	})
 
+	if str == "" {
+		return []event.Event{}, nil
+	}
 	surf := event.Event{Text: str}
 	return []event.Event{surf}, nil
 }

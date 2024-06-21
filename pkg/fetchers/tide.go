@@ -32,11 +32,8 @@ func Tide() ([]event.Event, error) {
 			} else {
 				str += "⏬"
 			}
-		} else {
-			str += ", "
-		}
-
-		str += strings.TrimLeft(time, "0")
+			str += strings.TrimLeft(time, "0")
+		} 
 	})
 
 	return []event.Event{{Text: str}}, nil
