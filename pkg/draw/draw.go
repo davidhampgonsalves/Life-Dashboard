@@ -66,6 +66,7 @@ func Date(ctx *canvas.Context, font *canvas.FontFamily, y float64) {
 	if err != nil {
 		fmt.Printf("sprite not found - %s\n", name)
 	}
+	defer icon.Close()
 	img, err := png.Decode(icon)
 	if err != nil {
 		fmt.Printf("Couldn't decode sprite: %s\n", name)
@@ -107,6 +108,7 @@ func Event(face *canvas.FontFace, ctx *canvas.Context, e event.Event, y float64)
 				fmt.Printf("rune not found - %x\n", r)
 				continue
 			}
+			defer icon.Close()
 			pngIcon, err := png.Decode(icon)
 			if err != nil {
 				fmt.Printf("icon couldn't be opened as png - %x\n", r)
