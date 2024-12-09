@@ -25,9 +25,9 @@ while true; do
 
   if curl http://192.168.2.23:8080/ > ldb.png ; then
     echo "image downloaded" 
-    ./fbink/bin/fbink --clear -g file=ldb.png
+    ./fbink --clear -g file=ldb.png
   else
-    ./fbink/bin/fbink -pmM -y -8 "Endpoint request failed, exiting"
+    ./fbink -pmM -y -8 "Endpoint request failed, exiting"
     exit
   fi
 

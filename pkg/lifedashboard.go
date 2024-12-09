@@ -21,6 +21,7 @@ func Generate() []byte {
 		// fetchers.Surfline,
 		fetchers.Tide,
 		fetchers.SunAndMoon,
+		// fetchers.NsPower,
 	}
 
 	events := []event.Event{}

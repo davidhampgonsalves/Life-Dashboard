@@ -1,13 +1,18 @@
 #!/bin/sh
-ssh root@192.168.5.11 "/usr/sbin/mntroot rw"
+zip client.zip fbink life-dashboard-init start.sh
+ssh root@192.168.2.15 "/usr/sbin/mntroot rw"
 
-scp start.sh root@192.168.5.11:/start.sh
-scp life-dashboard-init root@192.168.5.11:/etc/init.d/life-dashboard-init
+scp client.zip root@192.168.2.15:client.zip
 
-ssh root@192.168.5.11 << EOF
+ssh "
+
+ssh root@192.168.2.15 << EOF
+  unzip client.zip -d /
 	cd /
+  mv life-dashboard-init /etc/init.d/life-dashboard-init
 	chmod 777 start.sh
 	chmod 777 /etc/init.d/life-dashboard-init
+  chmod u+x fbink
 
 	echo "Install complete, start script with: `/etc/init.d/life-dashboard-init start` and let it run till the ssh session hangs"
 EOF

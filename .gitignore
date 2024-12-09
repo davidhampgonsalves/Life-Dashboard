@@ -1,10 +1,4 @@
 creds/*
-terraform.tfstate
-terraform.tfstate.backup
-ldb
-ldb.test
 ldb.test.png
-ldb.zip
+client.zip
 .DS_Store
-**/.terraform/*
-.terraform.lock.hcl

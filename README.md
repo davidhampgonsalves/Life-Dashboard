@@ -17,11 +17,8 @@ I found out about [FBInk](https://github.com/NiLuJe/FBInk) which has Go bindings
 
 This led me to my current compromise. I use FBInk on the kindle to display the images after curling them from a API Gateway/Lambda backend. This gives me a low friction way to update the API logic without needing to touch the kindle or cross compile anything. I also was able to use GoLangs [tdewolff/canvas](https://github.com/tdewolff/canvas/) which provides nice text setting and image generation tooling. I think is the right balance to keep this device productive for another 5+ years.
 
-# Deploy (via Terraform)
-`./deploy.sh`
-
-# Run Locally
-`go test -c -o ldb.test ./pkg/ && ./ldb.test && open ldb.test.png`
+# Self Hosted
+Start with `service lifedashboard start`
 
 # Setup
 
@@ -47,5 +44,5 @@ dbus-send --system /default com.lab126.powerd.resuming int32:1
 ## Notes
 The [mobileread forumn](https://www.mobileread.com/forums/) is the place for mobile reader hacking.
 
-I could have avoided the backend of this project and only used the Kindle but I had already created it for another project and saved time to reuse it.
-
+## My Device
+Mac: F0:A2:25:04:37:2C
