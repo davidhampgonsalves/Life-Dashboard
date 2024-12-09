@@ -46,7 +46,7 @@ func toUnicode(observationType string) string {
 func Weather() ([]event.Event, error) {
 	resp, err := http.Get("https://weather.gc.ca/city/pages/ns-19_metric_e.html")
 	if err != nil || resp.StatusCode != 200 {
-		return nil, errors.New("bouy data failed to load")
+		return nil, errors.New("weather failed to load")
 	}
 	defer resp.Body.Close()
 

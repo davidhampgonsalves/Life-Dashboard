@@ -1,0 +1,33 @@
+[Unit]
+Description=Lifedashboard webserver
+After=remote-fs.target network.target
+AssertPathExists=/home/david/Life-Dashboard
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+User=david
+Group=david
+Type=simple
+ExecStart=go run main.go
+WorkingDirectory=/home/david/Life-Dashboard
+TimeoutStopSec=20
+KillMode=process
+Restart=on-failure
+
+# See https://www.freedesktop.org/software/systemd/man/systemd.exec.html
+DevicePolicy=closed
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateUsers=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+SystemCallFilter=~@clock @debug @module @mount @obsolete @reboot @setuid @swap
+ReadWritePaths=/home/david/Life-Dashboard
+
+ProtectSystem=strict

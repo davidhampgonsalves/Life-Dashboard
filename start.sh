@@ -23,7 +23,7 @@ while true; do
   enable_wifi
   echo "requesting image"
 
-  if curl https://iqxi0d5cbl.execute-api.us-east-1.amazonaws.com/v1/lifedashboard > ldb.png ; then
+  if curl http://192.168.2.23:8080/ > ldb.png ; then
     echo "image downloaded" 
     ./fbink/bin/fbink --clear -g file=ldb.png
   else

@@ -18,6 +18,7 @@ func Generate() []byte {
 		fetchers.GoogleCalendar("davidhampgonsalves@gmail.com"),
 		fetchers.GoogleCalendar("ms7011nsnge4elr2cgvrmhap6g@group.calendar.google.com"),
 		fetchers.SurfCaptain,
+		// fetchers.Surfline,
 		fetchers.Tide,
 		fetchers.SunAndMoon,
 	}
