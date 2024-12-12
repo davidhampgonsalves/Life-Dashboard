@@ -44,7 +44,7 @@ func toUnicode(observationType string) string {
 }
 
 func Weather() ([]event.Event, error) {
-	resp, err := http.Get("https://weather.gc.ca/city/pages/ns-19_metric_e.html")
+	resp, err := http.Get("https://weather.gc.ca/en/location/index.html?coords=44.649,-63.602")
 	if err != nil || resp.StatusCode != 200 {
 		return nil, errors.New("weather failed to load")
 	}
@@ -54,8 +54,15 @@ func Weather() ([]event.Event, error) {
 	if err != nil {
 		return nil, err
 	}
-	observationType, _ := doc.Find("img[data-v-33b01f9c]").First().Attr("alt")
-	description := doc.Find(".pdg-tp-0").First().Find("td").Last().Text()
-	weather := event.Event{Text: fmt.Sprintf("%s %s", toUnicode(observationType), description)}
+	observationType, _ := doc.Find("img.mrgn-tp-md").First().Attr("alt")
+	high := doc.Find(".mrgn-lft-sm[title=High]").First().Text()
+	low := doc.Find(".mrgn-lft-sm[title=Low]").First().Text()
+
+	rawDescription := doc.Find(".pdg-tp-0").First().Find("td").Last().Text()
+	
+	re := regexp.MustCompile(`([^.]+\.[^.]+\.)`)
+	match := re.FindStringSubmatch(rawDescription)
+
+	weather := event.Event{Text: fmt.Sprintf("%s %s/%s🌡️, %s", toUnicode(observationType), high, low, match[0])}
 	return []event.Event{weather}, nil
 }
