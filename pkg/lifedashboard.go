@@ -19,6 +19,7 @@ func Generate() []byte {
 		fetchers.SurfCaptain,
 		fetchers.Tide,
 		fetchers.SunAndMoon,
+		fetchers.OvalSkating,
 		// fetchers.SchoolClosures, // they changed the location, check back when canceled
 		// fetchers.NsPower,
 		// fetchers.Surfline,
