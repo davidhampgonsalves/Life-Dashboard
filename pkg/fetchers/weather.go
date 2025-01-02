@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io"
 	"fmt"
-	"log"
 
 	"davidhampgonsalves/lifedashboard/pkg/event"
 	"davidhampgonsalves/lifedashboard/pkg/utils"
