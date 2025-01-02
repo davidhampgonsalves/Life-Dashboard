@@ -2,67 +2,69 @@ package fetchers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"regexp"
-	"strings"
+	"bytes"
+	"encoding/json"
+	"io"
+	"fmt"
+	"log"
 
 	"davidhampgonsalves/lifedashboard/pkg/event"
-
-	"github.com/PuerkitoBio/goquery"
+	"davidhampgonsalves/lifedashboard/pkg/utils"
 )
 
-func toUnicode(observationType string) string {
-	ot := strings.ToLower(observationType)
+const SystemPrompt = "Based on the weather forecast described in json generate a weather summary for todays with the most important details that is at most 80 characters long. Do not include wind information unless gusts are over 100km/h. Always start with the high/low temp range using the format \"low temp-high temp🌡️\" and do not include a unit symbol. If there is rain that day try and note any periods when it stops. Ignore fog information.Prefer terse summaries.End summary with a period.Include a emoji at the start of the summary to characterize the days weather."
+type Content struct {
+	Text string `json:"text"`
+}
 
-	m, _ := regexp.MatchString("snow|freezing|ice|squalls", ot)
-	if m {
-		return "❄️"
-	}
-	m, _ = regexp.MatchString("rain|mist|precipitation|drizzle|thunder", ot)
-	if m {
-		return "🌂"
-	}
-	m, _ = regexp.MatchString("fog|haze", ot)
-	if m {
-		return "🌫"
-	}
-	m, _ = regexp.MatchString("clear", ot)
-	if m {
-		return "☀️"
-	}
-	m, _ = regexp.MatchString("partly cloud", ot)
-	if m {
-		return "⛅"
-	}
-	m, _ = regexp.MatchString("cloud", ot)
-	if m {
-		return "☁"
-	}
+type AnthropicResponse  struct {
+	Content []Content `json:"content"`
+}
 
-	return "🦞"
+func jsonEscape(i string) string {
+	b, err := json.Marshal(i)
+	if err != nil {
+			panic(err)
+	}
+	return string(b[1:len(b)-1])
 }
 
 func Weather() ([]event.Event, error) {
-	resp, err := http.Get("https://weather.gc.ca/en/location/index.html?coords=44.649,-63.602")
+	resp, err := http.Get("https://weather.gc.ca/api/app/en/Location/44.649,-63.602?type=city")
 	if err != nil || resp.StatusCode != 200 {
 		return nil, errors.New("weather failed to load")
 	}
+	jsonBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.New("weather failed to read")
+	}
 	defer resp.Body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return nil, err
+	body := []byte(
+		fmt.Sprintf(`{ "model": "claude-3-5-sonnet-20241022", "system": "%s", "max_tokens": 1024, "messages": [ { "role": "user", "content": "%s" } ] }`, 
+		jsonEscape(SystemPrompt), 
+		jsonEscape(string(jsonBytes))))
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewBuffer(body))
+	apiKey, _ := utils.ReadCredFile("anthropic.txt")
+	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("content-type", "application/json")
+	resp, err = client.Do(req)
+
+	if err != nil || resp.StatusCode != 200 {
+		errorRes, _ := io.ReadAll(resp.Body)
+		log.Printf(string(errorRes))
+		return nil, errors.New("anthropic request failed")
 	}
-	observationType, _ := doc.Find("img.mrgn-tp-md").First().Attr("alt")
-	high := doc.Find(".mrgn-lft-sm[title=High]").First().Text()
-	low := doc.Find(".mrgn-lft-sm[title=Low]").First().Text()
+	defer resp.Body.Close()
 
-	rawDescription := doc.Find(".pdg-tp-0").First().Find("td").Last().Text()
+	anthropicResponse:= &AnthropicResponse{}
+	err = json.NewDecoder(resp.Body).Decode(anthropicResponse)
+	if err != nil { return nil, errors.New("anthropic response could not be decoded") }
 	
-	re := regexp.MustCompile(`([^.]+\.[^.]+\.)`)
-	match := re.FindStringSubmatch(rawDescription)
-
-	weather := event.Event{Text: fmt.Sprintf("%s %s/%s🌡️, %s", toUnicode(observationType), high, low, match[0])}
+	weather := event.Event{Text: anthropicResponse.Content[0].Text}
 	return []event.Event{weather}, nil
 }
