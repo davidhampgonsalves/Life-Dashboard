@@ -54,11 +54,7 @@ func Weather() ([]event.Event, error) {
 	req.Header.Set("content-type", "application/json")
 	resp, err = client.Do(req)
 
-	if err != nil || resp.StatusCode != 200 {
-		errorRes, _ := io.ReadAll(resp.Body)
-		log.Printf(string(errorRes))
-		return nil, errors.New("anthropic request failed")
-	}
+	if err != nil || resp.StatusCode != 200 { return nil, errors.New("anthropic request failed") }
 	defer resp.Body.Close()
 
 	anthropicResponse:= &AnthropicResponse{}

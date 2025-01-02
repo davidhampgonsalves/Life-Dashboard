@@ -48,4 +48,5 @@ The [mobileread forumn](https://www.mobileread.com/forums/) is the place for mob
 Mac: F0:A2:25:04:37:2C
 
 ## Server
-`service lifedashboard restart`
+`service lifedashboard start`
+But you have to kill the process to restart `ps -aux | grep go`
