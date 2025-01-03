@@ -25,11 +25,10 @@ while true; do
   echo "requesting image"
 
   if curl http://192.168.2.23:8080/ > ldb.png ; then
-    echo "image downloaded" 
+    echo "image downloaded"
     ./fbink --clear -g file=ldb.png
   else
-    ./fbink -pmM -y -8 "Endpoint request failed, exiting"
-    exit
+    ./fbink -pmM -y -8 "Endpoint request failed"
   fi
 
   echo "disabling wifi"
@@ -44,7 +43,7 @@ while true; do
   let next_refresh_minutes=$next_refresh/60
   eips 2 37 "next $next_refresh_minutes (minutes) b.$battery_level"
   eips 2 38 "$(TZ=UTC+3 date -R "+%a %l:%M")"
-  
+
   echo "entering rtc sleep"
   sleep 5
   echo $next_refresh > /sys/devices/platform/mxc_rtc.0/wakeup_enable
