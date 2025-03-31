@@ -44,8 +44,15 @@ while true; do
   eips 2 37 "next $next_refresh_minutes (minutes) b.$battery_level"
   eips 2 38 "$(TZ=UTC+3 date -R "+%a %l:%M")"
 
-  echo "entering rtc sleep"
-  sleep 5
-  echo $next_refresh > /sys/devices/platform/mxc_rtc.0/wakeup_enable
-  echo "mem" > /sys/power/state
+  if [[ $battery_level -gt 5 ]]
+    then
+      echo "entering rtc sleep"
+      sleep 5
+      echo $next_refresh > /sys/devices/platform/mxc_rtc.0/wakeup_enable
+      echo "mem" > /sys/power/state
+    else
+      echo "leaving wifi on and skipping sleep to keep sane final state"
+      enable_wifi
+  fi
+
 done
