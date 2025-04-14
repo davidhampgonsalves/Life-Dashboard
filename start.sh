@@ -1,6 +1,4 @@
 #!/bin/sh
-# Run via /etc/init.d/life-dashboard-init start
-
 enable_wifi() {
   lipc-set-prop com.lab126.cmd wirelessEnable 1
   while ! lipc-get-prop com.lab126.wifid cmState | grep -q CONNECTED; do sleep 1; done
@@ -51,8 +49,7 @@ while true; do
       echo $next_refresh > /sys/devices/platform/mxc_rtc.0/wakeup_enable
       echo "mem" > /sys/power/state
     else
-      echo "leaving wifi on and skipping sleep to keep sane final state"
+      ./fbink -pmM -y -8 "Battery low, leaving wifi enabled"
       enable_wifi
   fi
-
 done

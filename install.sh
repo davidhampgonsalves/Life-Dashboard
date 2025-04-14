@@ -1,12 +1,10 @@
 #!/bin/sh
-zip client.zip fbink life-dashboard-init start.sh
-ssh root@192.168.2.15 "/usr/sbin/mntroot rw"
+zip client.zip fbink life-dashboard-init start.sh life-dashaboard-init
+ssh root@192.168.2.190 "/usr/sbin/mntroot rw"
 
-scp client.zip root@192.168.2.15:client.zip
+scp client.zip root@192.168.2.190:client.zip
 
-ssh "
-
-ssh root@192.168.2.15 << EOF
+ssh root@192.168.2.190 << EOF
   unzip client.zip -d /
 	cd /
   mv life-dashboard-init /etc/init.d/life-dashboard-init
