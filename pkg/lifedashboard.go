@@ -16,14 +16,15 @@ func Generate() []byte {
 		fetchers.Weather,
 		fetchers.GoogleCalendar("davidhampgonsalves@gmail.com"),
 		fetchers.GoogleCalendar("ms7011nsnge4elr2cgvrmhap6g@group.calendar.google.com"),
-		fetchers.SurfCaptain,
+		fetchers.Surfline,
 		fetchers.Tide,
 		fetchers.SunAndMoon,
-		// fetchers.OvalSkating,
+		fetchers.Todos,
 
+		// fetchers.OvalSkating,
 		// fetchers.SchoolClosures, // they changed the location, check back when canceled
 		// fetchers.NsPower,
-		// fetchers.Surfline,
+		// fetchers.SurfCaptain,
 	}
 
 	events := []event.Event{}

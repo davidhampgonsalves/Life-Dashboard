@@ -10,6 +10,11 @@ import (
 
 func main() {
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/" {
+				http.NotFound(w, r)
+				return
+			}
+
 			png := pkg.Generate();
 			w.Header().Set("Content-Type", "image/png") // <-- set the content-type header
 			io.Copy(w, bytes.NewBuffer(png))
