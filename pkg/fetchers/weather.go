@@ -1,12 +1,12 @@
 package fetchers
 
 import (
-	"errors"
-	"net/http"
 	"bytes"
 	"encoding/json"
-	"io"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 
 	"davidhampgonsalves/lifedashboard/pkg/event"
 	"davidhampgonsalves/lifedashboard/pkg/utils"
@@ -27,13 +27,12 @@ type Part struct {
 	Text string `json:"text"`
 }
 
-
 func jsonEscape(i string) string {
 	b, err := json.Marshal(i)
 	if err != nil {
-			panic(err)
+		panic(err)
 	}
-	return string(b[1:len(b)-1])
+	return string(b[1 : len(b)-1])
 }
 
 func Weather() ([]event.Event, error) {
@@ -53,7 +52,7 @@ func Weather() ([]event.Event, error) {
 	apiKey, _ := utils.ReadCredFile("gemini.txt")
 	client := &http.Client{}
 
-	req, _ := http.NewRequest("POST", "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", bytes.NewBuffer(body))
+	req, _ := http.NewRequest("POST", "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent", bytes.NewBuffer(body))
 	req.Header.Set("X-goog-api-key", apiKey)
 	req.Header.Set("content-type", "application/json")
 	resp, err = client.Do(req)
@@ -63,7 +62,9 @@ func Weather() ([]event.Event, error) {
 		return nil, errors.New("weather failed to read")
 	}
 
-	if err != nil || resp.StatusCode != 200 { return nil, errors.New("Gemini error") }
+	if err != nil || resp.StatusCode != 200 {
+		return nil, errors.New("Gemini error")
+	}
 	defer resp.Body.Close()
 
 	body, _ = io.ReadAll(resp.Body)

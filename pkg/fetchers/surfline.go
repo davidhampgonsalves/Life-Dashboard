@@ -27,11 +27,20 @@ type Json struct {
 }
 
 func Surfline() ([]event.Event, error) {
-	resp, err := http.Get("https://services.surfline.com/kbyg/spots/forecasts/rating?spotId=584204204e65fad6a77094cb&days=3&intervalHours=1&cacheEnabled=true")
+	req, err := http.NewRequest("GET", "https://services.surfline.com/kbyg/spots/forecasts/rating?spotId=584204204e65fad6a77094cb&days=3&intervalHours=1&cacheEnabled=true", nil)
+	if err != nil {
+		return nil, errors.New("surfline data failed to build request")
+	}
 
+	realUserAgent := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+	req.Header.Set("User-Agent", realUserAgent)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode != 200 {
 		return nil, errors.New("surfline data failed to load")
 	}
+
 	defer resp.Body.Close()
 
 	var report Json

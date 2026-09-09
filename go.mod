@@ -7,6 +7,7 @@ toolchain go1.22.2
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/aws/aws-lambda-go v1.41.0
+	github.com/chromedp/chromedp v0.9.5
 	github.com/janczer/goMoonPhase v0.0.0-20210411203237-6c61017953a8
 	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/tdewolff/canvas v0.0.0-20240420213651-d5a04e36ef50
@@ -22,7 +23,6 @@ require (
 	github.com/benoitkugler/textlayout v0.3.0 // indirect
 	github.com/benoitkugler/textprocessing v0.0.3 // indirect
 	github.com/chromedp/cdproto v0.0.0-20240202021202-6d0b6a386732 // indirect
-	github.com/chromedp/chromedp v0.9.5 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/go-fonts/latin-modern v0.3.2 // indirect
