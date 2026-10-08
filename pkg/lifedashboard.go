@@ -19,6 +19,7 @@ func Generate() []byte {
 		fetchers.Surfline,
 		fetchers.Tide,
 		fetchers.SunAndMoon,
+		fetchers.Lunch,
 
 		// fetchers.Todos,
 		// fetchers.OvalSkating,
