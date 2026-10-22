@@ -17,7 +17,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const lunchFile = "lunch.eml"
+const lunchFile = "share/lunch.eml"
 
 func Lunch() ([]event.Event, error) {
 	f, err := os.Open(lunchFile)
