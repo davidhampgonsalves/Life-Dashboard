@@ -49,7 +49,10 @@ func Weather() ([]event.Event, error) {
 	bodyContent := fmt.Sprintf(`{ "contents": [ { "parts": [ { "text": "%s\n%s" } ] } ] }`, jsonEscape(SystemPrompt), jsonEscape(string(jsonBytes)))
 	body := []byte(bodyContent)
 
-	apiKey, _ := utils.ReadCredFile("gemini.txt")
+	apiKey, err := utils.ReadCredFile("gemini.txt")
+	if err != nil {
+		return nil, err
+	}
 	client := &http.Client{}
 
 	req, _ := http.NewRequest("POST", "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent", bytes.NewBuffer(body))
@@ -62,12 +65,12 @@ func Weather() ([]event.Event, error) {
 		return nil, errors.New("weather failed to read")
 	}
 
-	if err != nil || resp.StatusCode != 200 {
-		return nil, errors.New("Gemini error")
-	}
 	defer resp.Body.Close()
 
 	body, _ = io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Gemini error %d: %s", resp.StatusCode, body)
+	}
 	var payload ResponsePayload
 	err = json.Unmarshal(body, &payload)
 	if err != nil {

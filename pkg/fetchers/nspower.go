@@ -1,7 +1,6 @@
 package fetchers
 
 import (
-	"fmt"
 	"context"
 	"log"
 	"time"
@@ -35,7 +34,7 @@ defer cancel()
 	defer cancel()
 
 	// navigate to a page, wait for an element, click
-	var usage *string
+	var usage string
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(`https://myaccount.nspower.ca/`),
 		// wait for footer element is visible (ie, page is loaded)
@@ -67,6 +66,6 @@ defer cancel()
 		log.Fatal(err)
 	}
 
-	surf := event.Event{Text: fmt.Sprintf("%s", usage)}
+	surf := event.Event{Text: usage}
 	return []event.Event{surf}, nil
 }
