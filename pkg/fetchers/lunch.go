@@ -9,6 +9,7 @@ import (
 	"mime/quotedprintable"
 	"net/mail"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -17,37 +18,73 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const lunchFile = "lunch.eml"
-
 func Lunch() ([]event.Event, error) {
-	f, err := os.Open(lunchFile)
+	lunchDir := os.Getenv("LUNCH_DIR")
+	if lunchDir == "" {
+		lunchDir = "."
+	}
+
+	files, err := filepath.Glob(filepath.Join(lunchDir, "*.eml"))
 	if err != nil {
-		return nil, fmt.Errorf("could not open %s", lunchFile)
+		return nil, err
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no eml files found in %s", lunchDir)
+	}
+
+	now := time.Now()
+	var events []event.Event
+	var errs []error
+	seen := map[string]bool{}
+
+	for _, file := range files {
+		meals, err := lunchMeals(file, now)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		for _, meal := range meals {
+			if seen[meal] {
+				continue
+			}
+			seen[meal] = true
+			events = append(events, event.Event{Text: fmt.Sprintf("🍲 %s", meal)})
+		}
+	}
+
+	if len(events) == 0 && len(errs) == len(files) {
+		return nil, errors.Join(errs...)
+	}
+
+	return events, nil
+}
+
+func lunchMeals(file string, now time.Time) ([]string, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s", file)
 	}
 	defer f.Close()
 
 	msg, err := mail.ReadMessage(f)
 	if err != nil {
-		return nil, fmt.Errorf("%s is not a valid email", lunchFile)
+		return nil, fmt.Errorf("%s is not a valid email", file)
 	}
 
 	html, err := lunchHtmlPart(msg.Header.Get("Content-Type"), msg.Header.Get("Content-Transfer-Encoding"), msg.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", file, err)
 	}
 	if html == "" {
-		return nil, errors.New("lunch email has no html part")
+		return nil, fmt.Errorf("%s has no html part", file)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", file, err)
 	}
 
-	now := time.Now()
-	var events []event.Event
-	seen := map[string]bool{}
-
+	var meals []string
 	doc.Find("table tr").Each(func(_ int, row *goquery.Selection) {
 		cells := row.Find("td")
 		if cells.Length() < 2 {
@@ -55,14 +92,13 @@ func Lunch() ([]event.Event, error) {
 		}
 		date := normalizeSpace(cells.Eq(cells.Length() - 2).Text())
 		meal := normalizeSpace(cells.Eq(cells.Length() - 1).Text())
-		if meal == "" || !isLunchToday(date, now) || seen[meal] {
+		if meal == "" || !isLunchToday(date, now) {
 			return
 		}
-		seen[meal] = true
-		events = append(events, event.Event{Text: fmt.Sprintf("🍲 %s", meal)})
+		meals = append(meals, meal)
 	})
 
-	return events, nil
+	return meals, nil
 }
 
 func lunchHtmlPart(contentType, encoding string, body io.Reader) (string, error) {

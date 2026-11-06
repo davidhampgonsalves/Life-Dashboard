@@ -4,5 +4,7 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    environment:
+      - LUNCH_DIR=/media/share
     volumes:
-      - /media/share/lunch.eml:/app/lunch.eml:ro
+      - /media/share:/media/share:ro
